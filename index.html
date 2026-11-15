@@ -877,7 +877,7 @@ B[12] = F => { // Dermaga
 B[13] = F => { // Sawah & Lumbung
   const paddy = canvasTex(32, 32, c => { c.fillStyle = '#8BD15A'; c.fillRect(0, 0, 32, 32); c.fillStyle = '#6FB845'; for (let i = 0; i < 32; i += 8) c.fillRect(i, 0, 4, 32); });
   paddy.wrapS = paddy.wrapT = T.RepeatWrapping; paddy.repeat.set(5, 3);
-  const pm = new T.MeshLambertMaterial({ map: paddy });
+  const pm = new T.MeshLambertMaterial({ map: paddy, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   for (const [x, z] of [[-4.2, -1.5], [4.2, -1.5], [-4.2, 4.5], [4.2, 4.5]]) {
     const p = new T.Mesh(new T.PlaneGeometry(7.6, 5), pm); p.rotation.x = -Math.PI / 2; p.position.set(F.cx + F.f * x, .06, F.cz + F.f * z); p.receiveShadow = true; scene.add(p);
     box(F, 8, .3, .35, '#8B6B3E', x, .15, z + 2.7, { cast: false });
@@ -1020,18 +1020,19 @@ W.build = function (sc, opts) {
   flat(220, 154, null, 0, -15, 0, new T.MeshLambertMaterial({ map: grass }));
   flat(800, 800, '#5E9E4E', 0, -300, -.3);
   flat(800, 800, '#5E9E4E', -500, 0, -.3); flat(800, 800, '#5E9E4E', 500, 0, -.3);
-  flat(240, 12, '#EED9A4', 0, 66, .015);
+  flat(240, 12, null, 0, 66, .03, new T.MeshLambertMaterial({ color: '#EED9A4', polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
   const wt = canvasTex(64, 64, c => { c.fillStyle = '#2E9BD6'; c.fillRect(0, 0, 64, 64); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; for (let y = 8; y < 64; y += 16) { c.beginPath(); c.moveTo(0, y); c.quadraticCurveTo(16, y - 5, 32, y); c.quadraticCurveTo(48, y + 5, 64, y); c.stroke(); } });
   wt.wrapS = wt.wrapT = T.RepeatWrapping; wt.repeat.set(60, 30);
   const sea = flat(800, 400, null, 0, 271, -.15, new T.MeshLambertMaterial({ map: wt, emissive: '#0A3550' }));
   W.dyn.push(t => { wt.offset.set(t * .01, t * .02); });
   // jalan
-  const asphalt = M('#4A4F58');
-  for (const z of [-40, 0, 40]) flat(204, 7, null, 0, z, .03, asphalt);
-  for (const x of [-60, 0, 60]) flat(7, 132, null, x, -1, .031, asphalt);
-  const dash = M('#F4F4F4');
-  for (const z of [-40, 0, 40]) for (let x = -98; x <= 98; x += 5) if ([-60, 0, 60].every(v => Math.abs(x - v) > 5)) { const d = new T.Mesh(new T.PlaneGeometry(2.2, .3), dash); d.rotation.x = -Math.PI / 2; d.position.set(x, .045, z); statics.push(d); }
-  for (const x of [-60, 0, 60]) for (let z = -64; z <= 62; z += 5) if ([-40, 0, 40].every(v => Math.abs(z - v) > 5)) { const d = new T.Mesh(new T.PlaneGeometry(.3, 2.2), dash); d.rotation.x = -Math.PI / 2; d.position.set(x, .046, z); statics.push(d); }
+  // polygonOffset + jarak tinggi yang cukup agar jalan tidak berkedip (z-fighting) saat dilihat dari jauh
+  const asphalt = new T.MeshLambertMaterial({ color: '#4A4F58', polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  for (const z of [-40, 0, 40]) flat(204, 7, null, 0, z, .06, asphalt);
+  for (const x of [-60, 0, 60]) flat(7, 132, null, x, -1, .06, asphalt);
+  const dash = new T.MeshLambertMaterial({ color: '#F4F4F4', polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+  for (const z of [-40, 0, 40]) for (let x = -98; x <= 98; x += 5) if ([-60, 0, 60].every(v => Math.abs(x - v) > 5)) { const d = new T.Mesh(new T.PlaneGeometry(2.2, .3), dash); d.rotation.x = -Math.PI / 2; d.position.set(x, .1, z); statics.push(d); }
+  for (const x of [-60, 0, 60]) for (let z = -64; z <= 62; z += 5) if ([-40, 0, 40].every(v => Math.abs(z - v) > 5)) { const d = new T.Mesh(new T.PlaneGeometry(.3, 2.2), dash); d.rotation.x = -Math.PI / 2; d.position.set(x, .1, z); statics.push(d); }
   // pagar tanaman tepi peta
   box(ORIGIN, 216, 1.2, 1.2, '#3E8E3A', 0, .6, -88, { collide: true });
   box(ORIGIN, 1.2, 1.2, 152, '#3E8E3A', -106, .6, -13, { collide: true }); box(ORIGIN, 1.2, 1.2, 152, '#3E8E3A', 106, .6, -13, { collide: true });
@@ -1335,7 +1336,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, IS_MOBILE ? 1.5 : 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.outputEncoding = T.sRGBEncoding;
 const scene = new T.Scene(); const SKY = new T.Color('#9FD6FF');
 scene.background = SKY.clone(); scene.fog = new T.Fog('#9FD6FF', 95, 260);
-const camera = new T.PerspectiveCamera(55, 1, .1, 900);
+const camera = new T.PerspectiveCamera(55, 1, .3, 900);
 const hemi = new T.HemisphereLight('#DDF1FF', '#5E8F45', .75); scene.add(hemi);
 const sun = new T.DirectionalLight('#FFF6E5', .95); sun.castShadow = true; sun.shadow.mapSize.set(IS_MOBILE ? 1024 : 2048, IS_MOBILE ? 1024 : 2048);
 const sc = sun.shadow.camera; sc.left = -40; sc.right = 40; sc.top = 40; sc.bottom = -40; sc.near = 1; sc.far = 260; sun.shadow.bias = -.0006;
@@ -1444,12 +1445,30 @@ $('joinForm').onsubmit = e => {
     $('jBtn').disabled = false; $('jErr').textContent = err.type === 'peer-unavailable' ? 'Kode tidak ditemukan. Cek lagi kode di layar guru.' : 'Koneksi bermasalah (' + err.type + '). Coba lagi.';
   });
 };
+// ---- Kirim pesan aman: PeerJS (json) menolak pesan >= ~16 KB, jadi pesan besar dipotong-potong ----
+const PK_LIMIT = 12000, PK_PART = 3500; let pkSeq = 0; const pkEnc = new TextEncoder();
+function packMsg(m) {
+  const s = JSON.stringify(m); if (s.length * 3 < PK_LIMIT || pkEnc.encode(s).length < PK_LIMIT) return [m];
+  const id = (++pkSeq) + '-' + Math.random().toString(36).slice(2, 7), n = Math.ceil(s.length / PK_PART), out = [];
+  for (let i = 0; i < n; i++) out.push({ t: 'ck', id, i, n, s: s.slice(i * PK_PART, (i + 1) * PK_PART) });
+  return out;
+}
+function sendMsg(c, m, packed) { if (!c || !c.open) return false; try { for (const x of (packed || packMsg(m))) c.send(x); return true; } catch (e) { console.warn('send gagal', e); return false; } }
+function recvMsg(c, m, cb) {
+  if (!m || typeof m !== 'object' || m.t !== 'ck') return cb(m);
+  const n = m.n | 0, i = m.i | 0; if (n < 1 || n > 400 || i < 0 || i >= n || typeof m.s !== 'string') return;
+  const box = c._ck || (c._ck = new Map()); let e = box.get(m.id);
+  if (!e) { if (box.size > 8) box.clear(); e = { n, p: new Array(n), got: 0 }; box.set(m.id, e); }
+  if (e.p[i] === undefined) { e.p[i] = m.s; e.got++; }
+  if (e.got === e.n) { box.delete(m.id); let o; try { o = JSON.parse(e.p.join('')); } catch (x) { console.warn('pesan rusak'); return; } cb(o); }
+}
 let reconnectTimer = null, reconnectTries = 0;
 function connectHost(first) {
   conn = peer.connect(PEER_PREFIX + joinCode, { serialization: 'json', reliable: true });
   const to = setTimeout(() => { if (conn && !conn.open && first) { $('jErr').textContent = 'Tidak tersambung. Cek kode dan pastikan layar guru terbuka.'; $('jBtn').disabled = false; } }, 10000);
-  conn.on('open', () => { clearTimeout(to); reconnectTries = 0; conn.send({ t: 'hello', name: me.name, shirt: me.shirt, hair: me.hair, sid: me.sid }); });
-  conn.on('data', onHostMsg);
+  conn.on('open', () => { clearTimeout(to); reconnectTries = 0; sendMsg(conn, { t: 'hello', name: me.name, shirt: me.shirt, hair: me.hair, sid: me.sid }); });
+  const myConn = conn; conn.on('data', m => recvMsg(myConn, m, onHostMsg));
+  conn.on('error', e => console.warn('conn error', e && e.type));
   conn.on('close', () => { if (MODE !== 'online') return; banner('Sambungan terputus. Menyambung ulang…', '#C0392B'); scheduleReconnect(); });
 }
 function scheduleReconnect() { clearTimeout(reconnectTimer); if (reconnectTries++ > 20) { banner('Sambungan ke guru terputus. Muat ulang halaman lalu masuk lagi dengan nama yang sama.', '#C0392B'); return; } reconnectTimer = setTimeout(() => { try { if (peer.disconnected) peer.reconnect(); connectHost(false); } catch (e) { scheduleReconnect(); } }, 2500); }
@@ -1490,7 +1509,7 @@ function startStudent() {
   refreshPosts(); updateHud(); lobbyBanner();
   if (MODE === 'solo') renderTop([{ name: me.name, shirt: me.shirt, score: myScore().score }]);
   clearInterval(sendTimer);
-  sendTimer = setInterval(() => { if (MODE === 'online' && conn && conn.open) conn.send({ t: 'st', x: +me.x.toFixed(1), y: +me.y.toFixed(1), z: +me.z.toFixed(1), r: +me.r.toFixed(2), s: +Math.hypot(me.vx, me.vz).toFixed(1), a: me.grounded ? 0 : 1 }); }, 125);
+  sendTimer = setInterval(() => { if (MODE === 'online' && conn && conn.open) sendMsg(conn, { t: 'st', x: +me.x.toFixed(1), y: +me.y.toFixed(1), z: +me.z.toFixed(1), r: +me.r.toFixed(2), s: +Math.hypot(me.vx, me.vz).toFixed(1), a: me.grounded ? 0 : 1 }); }, 125);
 }
 const myScore = () => C.scoreOf(BANK, me.answers, me.coins, me.star);
 function refreshPosts() {
@@ -1503,8 +1522,8 @@ function updateHud() {
   $('pScore').textContent = s.score + ' poin'; $('pProg').textContent = 'Pos ' + s.done.length + '/' + act + ' · Soal ' + s.answered + '/' + s.total; $('pBar').style.width = (act ? s.done.length / act * 100 : 0) + '%';
 }
 function renderTop(list) { const s = [...list].sort((a, b) => b.score - a.score).slice(0, 3); $('pTop').innerHTML = '<div class="muted" style="font-weight:900;font-size:11px">PERINGKAT</div>' + s.map((p, i) => `<div class="mini"><span>${i + 1}.</span><span class="dot" style="background:${esc(p.shirt)}"></span><span>${esc(p.name)}</span><b>${p.score | 0}</b></div>`).join(''); }
-function sendAns(qid, c) { if (MODE === 'online' && conn && conn.open) conn.send({ t: 'ans', qid, c }); }
-function sendExtra() { if (MODE === 'online' && conn && conn.open) conn.send({ t: 'extra', coins: me.coins, star: me.star }); }
+function sendAns(qid, c) { if (MODE === 'online' && conn && conn.open) sendMsg(conn, { t: 'ans', qid, c }); }
+function sendExtra() { if (MODE === 'online' && conn && conn.open) sendMsg(conn, { t: 'extra', coins: me.coins, star: me.star }); }
 function afterScore() { updateHud(); if (MODE === 'solo') renderTop([{ name: me.name, shirt: me.shirt, score: myScore().score }]); }
 
 // kontrol
@@ -1818,7 +1837,7 @@ const Host = {
   start() {
     $('hostUI').classList.add('on'); $('hUrl').textContent = location.host || 'alamat game ini';
     $('hKelas').value = Store.get('kb_kelas', ''); $('hKelas').oninput = () => Store.set('kb_kelas', $('hKelas').value.trim());
-    scene.fog.near = 260; scene.fog.far = 520; camera.fov = 45; camera.updateProjectionMatrix();
+    scene.fog.near = 260; scene.fog.far = 520; camera.fov = 45; camera.near = 1.5; camera.far = 700; camera.updateProjectionMatrix();
     sc.left = -120; sc.right = 120; sc.top = 100; sc.bottom = -100; sc.updateProjectionMatrix(); sun.position.set(50, 120, 60); sun.target.position.set(0, 0, -10);
     W.signScale(2.6); for (const c of W.clouds) c.visible = false; this.bank = Bank.active(); this.setPhase('lobby'); this.refreshPosts();
     if (typeof Peer === 'undefined') { $('hErr').textContent = 'Tidak ada internet: siswa belum bisa masuk. Mode demo tetap bisa dipakai.'; $('hCode').textContent = '----'; } else this.openPeer();
@@ -1830,7 +1849,8 @@ const Host = {
     peer.on('disconnected', () => { $('hErr').textContent = 'Koneksi server terputus, menyambung ulang…'; setTimeout(() => { try { peer.reconnect(); } catch (e) { } }, 1500); });
     peer.on('error', err => { if (err.type === 'unavailable-id') { peer.destroy(); this.openPeer(); } else if (err.type !== 'peer-unavailable') $('hErr').textContent = 'Koneksi bermasalah: ' + err.type; });
     peer.on('connection', c => {
-      c.on('data', m => { try { this.onMsg(c, m); } catch (e) { console.error(e); } });
+      c.on('data', m => recvMsg(c, m, mm => { try { this.onMsg(c, mm); } catch (e) { console.error(e); } }));
+      c.on('error', e => console.warn('conn error', e && e.type));
       c.on('close', () => { const sid = this.conns.get(c.peer); this.conns.delete(c.peer); const p = sid && this.players.get(sid); if (p && p.conn === c) { p.online = false; p.conn = null; if (p.av) p.av.visible = false; } });
     });
   },
@@ -1847,7 +1867,7 @@ const Host = {
       p.conn = c; p.online = true; this.conns.set(c.peer, sid);
       if (!p.av) { p.av = makeAvatar(p.shirt, p.hair, p.name, false); p.av.scale.setScalar(3); p.cx = p.x; p.cy = 0; p.cz = p.z; p.cr = p.r; }
       p.av.visible = !this.cer;
-      c.send({ t: 'welcome', bank: this.bank, phase: this.phase, remaining: this.remaining(), resume: { answers: p.answers, coins: p.coins, star: p.star } });
+      sendMsg(c, { t: 'welcome', bank: this.bank, phase: this.phase, remaining: this.remaining(), resume: { answers: p.answers, coins: p.coins, star: p.star } });
       this.sendRoster(); return;
     }
     const sid = this.conns.get(c.peer); const p = sid && this.players.get(sid); if (!p) return;
@@ -1858,8 +1878,8 @@ const Host = {
   remaining() { return this.phase === 'play' ? Math.max(0, (this.endsAt - Date.now()) / 1000) : this.dur; },
   scoreOf(p) { return C.scoreOf(this.bank, p.answers, p.coins, p.star); },
   list() { return [...this.players.values()].map(p => { const s = this.scoreOf(p); return { id: p.sid, name: p.name, shirt: p.shirt, hair: p.hair, score: s.score, done: s.done.length, answered: s.answered, online: !!p.online, bot: !!p.bot }; }); },
-  sendRoster() { const pl = this.list().filter(p => p.online); const msg = { t: 'roster', phase: this.phase, remaining: this.remaining(), players: pl }; for (const p of this.players.values()) if (p.conn && p.conn.open) try { p.conn.send(msg); } catch (e) { } },
-  sendPos() { if (!this.conns.size) return; const d = []; for (const p of this.players.values()) if (p.online) d.push(p.sid, +p.x.toFixed(1), +p.z.toFixed(1), +p.y.toFixed(1), +p.r.toFixed(2), +(+p.s).toFixed(1), p.a | 0); const msg = { t: 'p', d }; for (const p of this.players.values()) if (p.conn && p.conn.open) try { p.conn.send(msg); } catch (e) { } },
+  sendRoster() { const pl = this.list().filter(p => p.online); const pk = packMsg({ t: 'roster', phase: this.phase, remaining: this.remaining(), players: pl }); for (const p of this.players.values()) sendMsg(p.conn, null, pk); },
+  sendPos() { if (!this.conns.size) return; const d = []; for (const p of this.players.values()) if (p.online) d.push(p.sid, +p.x.toFixed(1), +p.z.toFixed(1), +p.y.toFixed(1), +p.r.toFixed(2), +(+p.s).toFixed(1), p.a | 0); const pk = packMsg({ t: 'p', d }); for (const p of this.players.values()) sendMsg(p.conn, null, pk); },
   tick() { if (this.phase === 'play' && this.remaining() <= 0) this.end(); if (this.phase === 'play' && this.remaining() < 60 && Music.mode === 'play') Music.setMode('hurry'); this.sendRoster(); $('hTime').textContent = fmt(this.remaining()); this.renderList(); },
   renderList() {
     const s = this.list().sort((a, b) => b.score - a.score); const act = C.activePosts(this.bank).length || 1; $('hCount').textContent = s.filter(p => p.online).length + ' siswa';
@@ -1877,14 +1897,14 @@ const Host = {
     if (MODE !== 'host') return; this.bank = Bank.active();
     for (const p of this.players.values()) { p.answers = {}; p.coins = 0; p.star = false; }
     this.sessionId = 0; this.refreshPosts(); this.setPhase(this.phase === 'end' ? 'lobby' : this.phase);
-    for (const p of this.players.values()) if (p.conn && p.conn.open) p.conn.send({ t: 'welcome', bank: this.bank, phase: this.phase, remaining: this.remaining(), resume: null });
+    for (const p of this.players.values()) sendMsg(p.conn, { t: 'welcome', bank: this.bank, phase: this.phase, remaining: this.remaining(), resume: null });
   },
   checkAllDone() {
     const pl = [...this.players.values()].filter(p => p.online); if (!pl.length || this.phase !== 'play') return; const n = C.activePosts(this.bank).length;
     if (pl.every(p => this.scoreOf(p).done.length >= n)) { toast('Semua siswa sudah menyelesaikan semua pos!', '#1FA556'); setTimeout(() => { if (this.phase === 'play') this.end(); }, 2500); }
   },
   begin() {
-    if (this.phase === 'end') { for (const p of this.players.values()) { p.answers = {}; p.coins = 0; p.star = false; if (p.bot) { p.bot.t = null; p.bot.q = []; } } for (const p of this.players.values()) if (p.conn && p.conn.open) p.conn.send({ t: 'reset' }); }
+    if (this.phase === 'end') { for (const p of this.players.values()) { p.answers = {}; p.coins = 0; p.star = false; if (p.bot) { p.bot.t = null; p.bot.q = []; } } for (const p of this.players.values()) sendMsg(p.conn, { t: 'reset' }); }
     this.sessionId = 0; this.endsAt = Date.now() + this.dur * 1000; this.setPhase('play'); this.refreshPosts(); sfx('star');
   },
   end() {
@@ -1893,7 +1913,7 @@ const Host = {
     const ranking = rank.map(s => { const p = this.players.get(s.sid) || {}; return { id: s.sid, name: s.name, score: s.score, shirt: p.shirt, hair: p.hair }; });
     for (const p of this.players.values()) if (p.conn && p.conn.open) {
       const i = rank.findIndex(s => s.sid === p.sid); const s = rank[i] || {};
-      p.conn.send({ t: 'ceremony', ranking: ranking.map(r => ({ name: r.name, score: r.score })), you: { rank: i + 1, score: s.score | 0, nilai: s.nilai | 0, report: C.studentReport(this.bank, p.answers) } });
+      sendMsg(p.conn, { t: 'ceremony', ranking: ranking.map(r => ({ name: r.name, score: r.score })), you: { rank: i + 1, score: s.score | 0, nilai: s.nilai | 0, report: C.studentReport(this.bank, p.answers) } });
     }
     Cer.start(ranking);
   },
