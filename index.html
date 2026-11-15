@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Petualangan Kampung Belajar 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<style>
+:root{--red:#E3263B;--navy:#0F2238;--panel:rgba(12,26,44,.86);--gold:#FFC83D;--ok:#2BC46B;--warn:#FFB020;--bad:#FF5A6A;--ink:#13202F;--muted:#B9CBE0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#9fd6ff;color:#fff;font-family:'Nunito',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+h1,h2,h3,.f{font-family:'Fredoka',system-ui,sans-serif;margin:0}
+.ar{font-family:'Amiri','Traditional Arabic','Scheherazade New',serif;font-size:1.32em;line-height:1.9;direction:rtl;unicode-bidi:isolate;font-weight:700}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:11px 16px;font-weight:900;font-size:15px;min-height:44px;color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.b-red{background:linear-gradient(#FF4A5C,#D01C30);box-shadow:0 4px 0 #8C0E1E}
+.b-green{background:linear-gradient(#3FD97E,#1FA556);box-shadow:0 4px 0 #11703A}
+.b-blue{background:linear-gradient(#3C8DFF,#1D63D6);box-shadow:0 4px 0 #11408E}
+.b-gold{background:linear-gradient(#FFD95C,#F0A800);box-shadow:0 4px 0 #9A6C00;color:#13202F}
+.b-glass{background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.28)}
+.b-sm{min-height:34px;padding:6px 10px;font-size:13px;border-radius:10px}
+button:active{transform:translateY(2px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{font:inherit;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:2px solid rgba(255,255,255,.3);width:100%;background:rgba(255,255,255,.96);color:var(--ink)}
+textarea{min-height:80px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:3px solid var(--gold)}
+label{font-weight:900;font-size:13px;display:block;margin:12px 0 5px;color:#D7E6F7}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;z-index:6}
+.ov.on{display:flex}
+.ov.dim{background:rgba(5,14,26,.55)}
+.panel{background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:2px solid rgba(255,255,255,.14);border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.card{padding:22px;width:100%;max-width:480px;max-height:100%;overflow:auto}
+.big{max-width:1100px;height:100%;display:flex;flex-direction:column;padding:0}
+.big .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:2px solid rgba(255,255,255,.1);flex-wrap:wrap}
+.big .bd{flex:1;overflow:auto;padding:16px}
+.err{color:#FF9AA5;font-weight:900;margin-top:8px;min-height:20px}
+.muted{color:var(--muted);font-size:14px}
+.logo{font-size:38px;line-height:1.04;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.logo .a{color:var(--gold)}
+.tag{display:inline-block;background:var(--red);border-radius:999px;padding:4px 12px;font-weight:900;font-size:13px;margin-bottom:8px}
+.grid{display:grid;gap:10px;margin-top:18px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+.sw{display:flex;gap:8px;flex-wrap:wrap}
+.sw button{width:40px;height:40px;min-height:0;padding:0;border-radius:10px;border:3px solid transparent}
+.sw button.sel{border-color:#fff;transform:scale(1.08)}
+.menuBtn{position:absolute;pointer-events:auto;width:46px;height:46px;min-height:0;padding:0;font-size:22px;border-radius:12px}
+/* HUD siswa */
+#hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:3}
+#hud.on{display:block}
+.chip{pointer-events:auto;padding:8px 12px;border-radius:14px}
+#hudL{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:8px}
+#hudL .sc{font-family:'Fredoka';font-size:24px;color:var(--gold);line-height:1}
+#hudL .nm{font-weight:900;font-size:13px;display:flex;gap:5px;align-items:center}
+#hudC{position:absolute;left:50%;top:10px;transform:translateX(-50%);text-align:center;min-width:150px}
+#pTime{font-family:'Fredoka';font-size:24px;line-height:1}
+.prog{height:7px;border-radius:4px;background:rgba(255,255,255,.18);margin-top:5px;overflow:hidden}.prog i{display:block;height:100%;background:var(--ok);width:0;transition:width .4s}
+#guideArrow{position:absolute;left:50%;top:82px;transform:translateX(-50%);display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-weight:900;font-size:13px;white-space:nowrap}
+#guideArrow svg{width:22px;height:22px;transition:transform .15s}
+#hudR{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#mm{width:150px;height:110px;border-radius:12px;border:2px solid rgba(255,255,255,.3);background:#5E9E4E;pointer-events:auto}
+#pTop{min-width:150px;font-size:12px}
+.mini{display:flex;gap:6px;font-weight:800;align-items:center}.mini b{margin-left:auto;color:var(--gold)}
+.dot{width:11px;height:11px;border-radius:3px;flex:none;display:inline-block}
+#hudMenu{right:170px;top:10px}
+#banner{position:absolute;left:50%;top:120px;transform:translateX(-50%);padding:8px 16px;border-radius:999px;font-weight:900;display:none;font-size:14px;text-align:center;max-width:92vw;pointer-events:auto}
+#stick{position:absolute;left:20px;bottom:24px;width:136px;height:136px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.55);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:41px;top:41px;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 3px 10px rgba(0,0,0,.3)}
+#jumpBtn{position:absolute;right:20px;bottom:28px;width:90px;height:90px;border-radius:50%;pointer-events:auto;font-size:14px;padding:0}
+#enterBtn{position:absolute;right:18px;bottom:136px;pointer-events:auto;display:none;font-size:16px;animation:pulse 1.1s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+@media (max-width:640px){#hudR #pTop{display:none}#mm{width:118px;height:86px}#hudMenu{right:136px}#hudC{top:62px}#guideArrow{top:128px}#banner{top:170px}}
+/* kuis */
+#quiz .card{max-width:600px}
+.qhead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.badge{background:var(--red);border-radius:999px;padding:4px 12px;font-weight:900;font-size:13px;white-space:nowrap}
+.qtext{font-size:20px;font-weight:900;margin:12px 0 14px;line-height:1.5}
+.opts{display:grid;gap:9px}
+.opt{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.25);text-align:left;font-size:17px;font-weight:800;display:flex;gap:10px;align-items:center;line-height:1.4}
+.opt .lt{flex:none;width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.opt .tx{flex:1}
+.opt.artx .tx{text-align:right}
+.opt.ok{background:rgba(43,196,107,.35);border-color:var(--ok)}
+.opt.no{background:rgba(227,38,59,.35);border-color:var(--red)}
+.opt:disabled{opacity:.8}.opt.ok:disabled,.opt.no:disabled{opacity:1}
+.fb{margin-top:12px;padding:12px;border-radius:12px;font-weight:800;display:none;line-height:1.5}
+.fb.ok{background:rgba(43,196,107,.25)}.fb.no{background:rgba(227,38,59,.25)}
+/* host */
+#hostUI{position:fixed;inset:0;pointer-events:none;display:none;z-index:3}
+#hostUI.on{display:block}
+#hLeft{position:absolute;left:12px;top:12px;width:250px;padding:14px;pointer-events:auto;max-height:calc(100% - 24px);overflow:auto}
+#hLeft .code{font-family:'Fredoka';font-size:56px;letter-spacing:6px;color:var(--gold);line-height:1;margin:4px 0}
+#hUrl{word-break:break-all}
+#hTop{position:absolute;left:50%;top:12px;transform:translateX(-50%);padding:10px 16px;text-align:center;pointer-events:auto;min-width:380px}
+#hPhase{font-weight:900;letter-spacing:1px;font-size:13px;text-transform:uppercase}
+#hTime{font-family:'Fredoka';font-size:44px;line-height:1.05}
+#hTop .row{margin-top:6px;flex-wrap:nowrap}
+#hTop button{font-size:14px;padding:8px 12px;min-height:40px}
+#hRight{position:absolute;right:12px;top:12px;bottom:12px;width:310px;padding:12px;pointer-events:auto;display:flex;flex-direction:column}
+#hList{list-style:none;margin:8px 0 0;padding:0;overflow:auto;display:flex;flex-direction:column;gap:5px}
+#hList li{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border-radius:10px;padding:6px 8px;font-weight:800;font-size:13px}
+#hList .nm{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#hList .pg{width:60px;height:7px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden}#hList .pg i{display:block;height:100%;background:var(--ok)}
+#hList .s{font-family:'Fredoka';color:var(--gold);min-width:34px;text-align:right}
+#hostMenu{left:auto;right:334px;top:12px}
+@media (max-width:1000px){#hRight{top:auto;height:36%;width:auto;left:12px}#hLeft{width:210px}#hLeft .code{font-size:40px}#hTop{min-width:0;left:auto;right:12px;transform:none}#hostMenu{right:12px;top:auto;bottom:calc(36% + 22px)}}
+/* tabel & bank */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.12);text-align:left;vertical-align:top}
+.tbl th{position:sticky;top:0;background:#14304F;font-size:12px;z-index:1}
+.c-t{background:rgba(43,196,107,.55)!important}.c-p{background:rgba(255,176,32,.55)!important}.c-r{background:rgba(255,90,106,.6)!important}.c-b{color:var(--muted)}
+.tbl td.c{text-align:center;font-weight:900;border-left:2px solid rgba(15,34,56,.6)}
+.pk{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.07);margin-bottom:8px;flex-wrap:wrap}
+.pk.act{outline:3px solid var(--gold)}
+.pk .nm{flex:1;min-width:200px;font-weight:900}
+.sec{margin:18px 0 8px;font-family:'Fredoka';font-size:18px;color:var(--gold)}
+.bar{height:16px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;min-width:80px}.bar i{display:block;height:100%}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button.on{background:var(--gold);color:var(--ink);box-shadow:none}
+.lst{margin:6px 0 0;padding-left:18px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:8px 0}.legend span{display:flex;align-items:center;gap:5px}
+.qrow{padding:10px;border-radius:10px;background:rgba(255,255,255,.07);margin-bottom:6px;display:flex;gap:10px;align-items:flex-start}
+.qrow .t{flex:1;line-height:1.5}
+/* upacara */
+#cer{position:fixed;inset:0;pointer-events:none;z-index:7;display:none;align-items:center;justify-content:flex-start;padding-top:6vh;flex-direction:column}
+#cer.on{display:flex}
+#cerText{font-family:'Fredoka';font-size:clamp(34px,6vw,84px);text-align:center;text-shadow:0 6px 0 rgba(0,0,0,.35),0 0 40px rgba(255,200,61,.6);padding:0 20px;line-height:1.1}
+#cerText.pop{animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
+#cerText .nmx{display:block;color:var(--gold);font-size:1.25em}
+@keyframes pop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+#cerSkip{position:fixed;right:16px;bottom:16px;pointer-events:auto}
+#final .card{max-width:620px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:14px 0}
+.pd{width:120px;text-align:center}
+.pd .bx{border-radius:12px 12px 0 0;font-family:'Fredoka';font-size:30px;display:flex;justify-content:center;padding-top:6px;color:#13202F}
+.pd .n{font-weight:900;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.medal{font-family:'Fredoka';font-size:clamp(40px,10vw,72px);line-height:1;background:linear-gradient(#FFF3B0,#FFC83D 50%,#E09A00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 rgba(0,0,0,.3))}
+.medal.s2{background:linear-gradient(#FFFFFF,#C9D2DC 55%,#8E9AA8);-webkit-background-clip:text;background-clip:text}
+.medal.s3{background:linear-gradient(#FFE2C4,#D08A4A 55%,#9A5A24);-webkit-background-clip:text;background-clip:text}
+.glow{animation:glow 1.2s infinite alternate}@keyframes glow{to{box-shadow:0 0 50px rgba(255,200,61,.8)}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+#confetti i{position:absolute;top:-20px;width:10px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translate3d(var(--dx),110vh,0) rotate(var(--r))}}
+#toast{position:fixed;left:50%;top:150px;transform:translateX(-50%);padding:10px 18px;border-radius:999px;font-weight:900;display:none;z-index:10;white-space:nowrap;pointer-events:none}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0F2238;z-index:30;font-family:'Fredoka';font-size:22px;text-align:center;padding:20px}
+.guide p{margin:6px 0;line-height:1.5}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+</style>
+
+<canvas id="gl"></canvas>
+<div id="loading">Memuat dunia 3D…</div>
+
+<!-- MENU UTAMA -->
+<div class="ov on" id="home"><div class="panel card" style="text-align:center">
+  <span class="tag">Game Edukasi 3D</span>
+  <h1 class="logo">Petualangan<br><span class="a">Kampung Belajar</span></h1>
+  <p class="muted" style="margin-top:8px" id="homeSub">Jelajahi kampung, taklukkan pos-pos soal, panjat Menara Bintang, dan kumpulkan koin bersama teman sekelas.</p>
+  <div class="grid">
+    <button class="b-red" id="goJoin">Saya Siswa – Masuk Permainan</button>
+    <button class="b-blue" id="goHost">Saya Guru – Buka Layar Kelas</button>
+    <button class="b-glass" id="goSolo">Coba Sendiri</button>
+    <button class="b-glass b-sm" data-guide>Panduan Bermain</button>
+  </div>
+</div></div>
+
+<!-- MASUK SISWA -->
+<div class="ov" id="join"><form class="panel card" id="joinForm" autocomplete="off">
+  <div class="row" style="align-items:center;flex-wrap:nowrap"><button type="button" class="b-glass b-sm" style="flex:none" data-home>← Kembali</button><h2 class="f" style="flex:1;text-align:right">Masuk Permainan</h2></div>
+  <label for="jCode">Kode dari guru (4 angka)</label>
+  <input id="jCode" inputmode="numeric" maxlength="4" placeholder="contoh: 4821">
+  <label for="jName">Nama panggilan</label>
+  <input id="jName" maxlength="12" placeholder="contoh: Aisyah">
+  <label>Warna baju</label><div class="sw" id="swShirt"></div>
+  <label>Warna rambut / peci</label><div class="sw" id="swHair"></div>
+  <div class="err" id="jErr"></div>
+  <button type="submit" class="b-red" id="jBtn" style="width:100%;margin-top:6px">Masuk</button>
+</form></div>
+
+<!-- HUD SISWA -->
+<div id="hud">
+  <div class="panel chip" id="hudL"><div><div class="nm"><span class="dot" id="pDot"></span><span id="pName">-</span></div><div class="sc" id="pScore">0</div></div></div>
+  <div class="panel chip" id="hudC"><div id="pTime">--:--</div><div class="muted" style="font-size:12px;font-weight:900" id="pProg">Pos 0/0</div><div class="prog"><i id="pBar"></i></div></div>
+  <div class="panel" id="guideArrow"><svg viewBox="0 0 24 24" id="gaSvg" aria-hidden="true"><path d="M12 2l7 10h-4v10h-6V12H5z" fill="#FFC83D"/></svg><span id="gaTxt"></span></div>
+  <div id="hudR"><canvas id="mm" width="300" height="220" aria-label="Peta mini"></canvas><div class="panel chip" id="pTop"></div></div>
+  <button class="menuBtn b-glass" id="hudMenu" aria-label="Menu">☰</button>
+  <div class="panel" id="banner"></div>
+  <div id="stick" aria-label="Joystick"><div id="knob"></div></div>
+  <button class="b-green" id="enterBtn">Masuk Pos</button>
+  <button class="b-blue" id="jumpBtn" aria-label="Lompat">LOMPAT</button>
+</div>
+
+<!-- KUIS -->
+<div class="ov dim" id="quiz"><div class="panel card" role="dialog" aria-modal="true" aria-labelledby="qText">
+  <div class="qhead"><div><h3 class="f" id="qPos"></h3><div class="muted" id="qSub"></div></div><span class="badge" id="qNum"></span></div>
+  <div class="qtext" id="qText"></div>
+  <div class="opts" id="qOpts"></div>
+  <div class="fb" id="qFb"></div>
+  <div class="row" style="margin-top:12px"><button class="b-glass" id="qClose">Tutup</button><button class="b-red" id="qNext" style="display:none">Lanjut</button></div>
+</div></div>
+
+<!-- HOST -->
+<div id="hostUI">
+  <div class="panel" id="hLeft">
+    <div class="muted" style="font-weight:900">KODE MASUK</div>
+    <div class="code" id="hCode">····</div>
+    <div class="muted">Siswa buka <b id="hUrl"></b> di HP → <b>Saya Siswa</b> → masukkan kode.</div>
+    <div class="err" id="hErr"></div>
+    <label for="hKelas" style="margin-top:4px">Kelas</label><input id="hKelas" maxlength="20" placeholder="contoh: 5A">
+    <div class="muted" style="margin-top:10px;font-weight:900">PAKET SOAL</div><div id="hPkg" style="font-weight:900;margin:2px 0 8px"></div>
+    <div class="grid" style="margin-top:0;gap:8px">
+      <button class="b-gold b-sm" id="hBank">Bank Soal</button>
+      <button class="b-blue b-sm" id="hAnalisis">Analisis Hasil</button>
+      <button class="b-glass b-sm" id="hDemo">+ Siswa demo</button>
+    </div>
+  </div>
+  <div class="panel" id="hTop">
+    <div id="hPhase">Menunggu instruksi guru</div>
+    <div id="hTime">20:00</div>
+    <div class="row"><button class="b-glass" id="hMinus">−5 mnt</button><button class="b-green" id="hStart">Mulai</button><button class="b-red" id="hStop" style="display:none">Akhiri</button><button class="b-glass" id="hPlus">+5 mnt</button></div>
+  </div>
+  <button class="menuBtn b-glass" id="hostMenu" aria-label="Menu">☰</button>
+  <div class="panel" id="hRight">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h3 class="f">Peta &amp; Pantauan Siswa</h3><span class="muted" id="hCount">0</span></div>
+    <ol id="hList"></ol>
+  </div>
+</div>
+
+<!-- BANK SOAL -->
+<div class="ov dim" id="bank"><div class="panel card big">
+  <div class="hd"><button class="b-glass b-sm" id="bankBack">← Kembali</button><h2 class="f" style="flex:1">Bank Soal</h2><span class="muted" id="bankActive"></span></div>
+  <div class="bd" id="bankBody"></div>
+</div></div>
+<input type="file" id="fileXlsx" accept=".xlsx,.xls,.csv" hidden>
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+
+<!-- FORM SOAL -->
+<div class="ov dim" id="qform" style="z-index:8"><form class="panel card" id="qfForm" style="max-width:620px" autocomplete="off">
+  <div class="row" style="align-items:center;flex-wrap:nowrap"><button type="button" class="b-glass b-sm" style="flex:none" id="qfBack">← Kembali</button><h3 class="f" style="flex:1;text-align:right" id="qfTitle">Tambah Soal</h3></div>
+  <div class="row"><div><label for="qfPos">Pos</label><select id="qfPos"></select></div><div><label for="qfKey">Kunci</label><select id="qfKey"><option>A</option><option>B</option><option>C</option><option>D</option></select></div></div>
+  <div class="row"><div><label for="qfMat">Materi / Bab</label><input id="qfMat" list="matList" maxlength="80"></div><div><label for="qfSub">Sub-materi</label><input id="qfSub" maxlength="80"></div></div>
+  <datalist id="matList"></datalist>
+  <label for="qfQ">Soal</label><textarea id="qfQ" maxlength="600"></textarea>
+  <div class="row"><div><label for="qfA">A</label><input id="qfA" maxlength="600"></div><div><label for="qfB">B</label><input id="qfB" maxlength="600"></div></div>
+  <div class="row"><div><label for="qfC">C (boleh kosong)</label><input id="qfC" maxlength="600"></div><div><label for="qfD">D (boleh kosong)</label><input id="qfD" maxlength="600"></div></div>
+  <label for="qfE">Pembahasan</label><input id="qfE" maxlength="600">
+  <div class="err" id="qfErr"></div>
+  <button type="submit" class="b-green" style="width:100%">Simpan Soal</button>
+</form></div>
+
+<!-- ANALISIS -->
+<div class="ov dim" id="ana"><div class="panel card big">
+  <div class="hd"><button class="b-glass b-sm" id="anaBack">← Kembali</button><h2 class="f">Analisis Hasil</h2>
+    <select id="anaSess" style="flex:1;min-width:220px;max-width:460px" aria-label="Pilih sesi"></select>
+    <button class="b-green b-sm" id="anaXlsx">Unduh Excel</button><button class="b-glass b-sm" id="anaDel">Hapus sesi</button></div>
+  <div style="padding:10px 16px 0"><div class="tabs" id="anaTabs"></div></div>
+  <div class="bd" id="anaBody"></div>
+</div></div>
+
+<!-- MENU ☰ -->
+<div class="ov dim" id="menu" style="z-index:9"><div class="panel card" style="max-width:360px">
+  <h2 class="f" style="text-align:center">Menu</h2>
+  <div class="grid">
+    <button class="b-green" id="mResume">Lanjutkan</button>
+    <button class="b-glass" data-guide>Panduan</button>
+    <button class="b-glass" id="mMusic">Musik: ON</button>
+    <button class="b-glass" id="mSound">Efek suara: ON</button>
+    <button class="b-glass" id="mFull">Layar Penuh</button>
+    <button class="b-red" id="mExit">Kembali ke Menu Utama</button>
+  </div>
+</div></div>
+
+<!-- KONFIRMASI -->
+<div class="ov dim" id="confirm" style="z-index:11"><div class="panel card" style="max-width:400px;text-align:center">
+  <h3 class="f" id="cfTitle">Yakin?</h3><p class="muted" id="cfText" style="line-height:1.5"></p>
+  <div class="row"><button class="b-glass" id="cfNo">Batal</button><button class="b-red" id="cfYes">Ya</button></div>
+</div></div>
+
+<!-- PANDUAN -->
+<div class="ov dim" id="guide" style="z-index:10"><div class="panel card guide" style="max-width:560px">
+  <h2 class="f">Panduan Bermain</h2>
+  <p class="sec" style="margin-top:10px">Untuk Siswa</p>
+  <p>1. Pilih <b>Saya Siswa</b>, masukkan kode dari guru dan nama panggilanmu.</p>
+  <p>2. Gerakkan tokoh dengan <b>joystick</b> (kiri bawah) dan tekan <b>LOMPAT</b>. Geser layar untuk memutar kamera.</p>
+  <p>3. Ikuti <b>panah kuning</b> atau <b>peta mini</b> ke pos bercahaya. Masuk ke lingkaran lalu tekan <b>Masuk Pos</b>.</p>
+  <p>4. Setiap jawaban benar +10 poin, pos selesai +10, koin +2, bintang di puncak Menara Bintang +20. Satu soal hanya bisa dijawab sekali.</p>
+  <p class="sec">Untuk Guru</p>
+  <p>1. Buka game di laptop + proyektor, pilih <b>Saya Guru</b>. Atur <b>Kelas</b> dan pilih paket di <b>Bank Soal</b>.</p>
+  <p>2. Tunggu siswa masuk, lalu tekan <b>Mulai</b>. Pantau skor di panel kanan.</p>
+  <p>3. Setelah selesai ada upacara juara, lalu buka <b>Analisis Hasil</b> untuk melihat kelemahan siswa dan unduh Excel.</p>
+  <p>Laptop: tombol W A S D / panah untuk jalan, Spasi lompat, E masuk pos.</p>
+  <p>Musik dan efek suara bisa dinyalakan/dimatikan lewat tombol ☰ Menu. Saran: di kelas, nyalakan musik di laptop guru (speaker) dan matikan musik di HP siswa agar tidak bersahutan.</p>
+  <button class="b-green" id="guideClose" style="width:100%;margin-top:12px">Tutup</button>
+</div></div>
+
+<!-- UPACARA JUARA -->
+<div id="cer"><div id="cerText"></div><button class="b-glass b-sm" id="cerSkip">Lewati ›</button></div>
+<div class="ov dim" id="final" style="z-index:8"><div class="panel card" style="text-align:center">
+  <h1 class="logo">Selamat <span class="a">Para Juara!</span></h1>
+  <div class="podium" id="podium"></div>
+  <div id="finalList" style="text-align:left;max-height:200px;overflow:auto"></div>
+  <div class="row" style="margin-top:14px"><button class="b-blue" id="fAna">Lihat Analisis</button><button class="b-green" id="fAgain">Main Lagi</button><button class="b-glass" id="fClose">Tutup</button></div>
+</div></div>
+
+<!-- HASIL SISWA -->
+<div class="ov dim" id="sres" style="z-index:8"><div class="panel card" style="text-align:center" id="sresCard">
+  <div id="sresBody"></div>
+  <button class="b-green" id="sresClose" style="width:100%;margin-top:14px">Tutup</button>
+</div></div>
+
+<div id="confetti"></div>
+<div class="panel" id="toast"></div>
+
+<script>
+/* Kampung Belajar 3D — logika inti (tanpa grafis), bisa diuji di Node */
+(function (G) {
+'use strict';
+
+// ---------- 16 pos ----------
+const POSTS = [
+  { id: 0,  key: 'masjid',       name: 'Masjid',               al: ['masjid', 'mesjid'] },
+  { id: 1,  key: 'madrasah',     name: 'Madrasah',             al: ['madrasah', 'sekolah'] },
+  { id: 2,  key: 'perpustakaan', name: 'Perpustakaan',         al: ['perpustakaan', 'perpus', 'pustaka'] },
+  { id: 3,  key: 'puskesmas',    name: 'Puskesmas',            al: ['puskesmas', 'klinik'] },
+  { id: 4,  key: 'pasar',        name: 'Pasar',                al: ['pasar'] },
+  { id: 5,  key: 'balai',        name: 'Balai Desa',           al: ['balaidesa', 'balai'] },
+  { id: 6,  key: 'rumahadat',    name: 'Rumah Adat Bugis',     al: ['rumahadatbugis', 'rumahadat', 'rumahpanggung'] },
+  { id: 7,  key: 'kantorpos',    name: 'Kantor Pos',           al: ['kantorpos'] },
+  { id: 8,  key: 'pemadam',      name: 'Pemadam Kebakaran',    al: ['pemadamkebakaran', 'pemadam', 'damkar'] },
+  { id: 9,  key: 'polisi',       name: 'Kantor Polisi',        al: ['kantorpolisi', 'polisi', 'polsek'] },
+  { id: 10, key: 'toko',         name: 'Toko Kelontong',       al: ['tokokelontong', 'toko', 'warung'] },
+  { id: 11, key: 'rumahwarga',   name: 'Rumah Warga',          al: ['rumahwarga', 'rumah'] },
+  { id: 12, key: 'dermaga',      name: 'Dermaga',              al: ['dermaga', 'dermagaperahu', 'pelabuhan', 'pantai'] },
+  { id: 13, key: 'sawah',        name: 'Sawah & Lumbung',      al: ['sawahlumbung', 'sawahdanlumbung', 'sawah', 'lumbung'] },
+  { id: 14, key: 'lapangan',     name: 'Lapangan Merah Putih', al: ['lapanganmerahputih', 'lapangan'] },
+  { id: 15, key: 'taman',        name: 'Taman Bermain',        al: ['tamanbermain', 'taman'] }
+];
+const SCORE = { ok: 10, bonus: 10, coin: 2, star: 20, maxCoins: 40 };
+const LV = { tuntas: 75, penguatan: 50 };
+const MAX_PER_POS = 10, MAX_Q = 200, MAX_LEN = 600;
+
+const norm = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
+const clean = s => String(s == null ? '' : s).replace(/\r/g, '').trim();
+
+function resolvePos(v) {
+  const raw = clean(v);
+  if (!raw) return -1;
+  let n = norm(raw);
+  const num = n.replace(/^pos/, '');
+  if (/^\d+$/.test(num)) { const k = parseInt(num, 10); return k >= 1 && k <= 16 ? k - 1 : -1; }
+  // nama persis lebih dulu, lalu alias terpanjang yang cocok
+  for (const p of POSTS) if (norm(p.name) === n) return p.id;
+  for (const p of POSTS) if (p.al.includes(n)) return p.id;
+  let best = -1, bl = 0;
+  for (const p of POSTS) for (const a of p.al) if (n.startsWith(a) && a.length > bl) { best = p.id; bl = a.length; }
+  return best;
+}
+
+function parseKey(v, opts) {
+  const raw = clean(v);
+  if (!raw) return -1;
+  const s = raw.toUpperCase().replace(/^(OPSI|PILIHAN|JAWABAN)\s*/, '').replace(/[().\s]/g, '');
+  if (/^[A-D]$/.test(s)) return 'ABCD'.indexOf(s);
+  if (/^[1-4]$/.test(s)) return parseInt(s, 10) - 1;
+  const i = (opts || []).findIndex(o => clean(o) && clean(o) === raw);
+  return i;
+}
+
+// TSV (salinan dari Excel/Sheets), mendukung sel bertanda kutip berisi baris baru/tab
+function parseTSV(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  const t = String(text || '').replace(/\r\n?/g, '\n');
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) {
+      if (c === '"') { if (t[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"' && cell === '') q = true;
+    else if (c === '\t') { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+const HEAD = {
+  pos: ['pos', 'nopos', 'bangunan', 'lokasi', 'tempat'],
+  materi: ['materi', 'bab', 'materibab', 'topik'],
+  sub: ['submateri', 'sub', 'indikator', 'subbab', 'kompetensi'],
+  q: ['soal', 'pertanyaan', 'butirsoal'],
+  A: ['a', 'opsia', 'pilihana', 'jawabana'], B: ['b', 'opsib', 'pilihanb', 'jawabanb'],
+  C: ['c', 'opsic', 'pilihanc', 'jawabanc'], D: ['d', 'opsid', 'pilihand', 'jawaband'],
+  key: ['kunci', 'kuncijawaban', 'jawabanbenar', 'jawaban'],
+  e: ['pembahasan', 'penjelasan', 'keterangan', 'alasan']
+};
+const DEFAULT_COLS = { pos: 0, materi: 1, sub: 2, q: 3, A: 4, B: 5, C: 6, D: 7, key: 8, e: 9 };
+function mapHeader(row) {
+  const cells = (row || []).map(norm);
+  if (!cells.some(c => HEAD.q.includes(c))) return null;
+  const m = {};
+  for (const k in HEAD) { const i = cells.findIndex(c => HEAD[k].includes(c)); if (i >= 0) m[k] = i; }
+  if (m.q === undefined || m.key === undefined || m.A === undefined || m.B === undefined) return null;
+  return m;
+}
+
+// rows: array of arrays → {questions, errors, warnings}
+function importRows(rows) {
+  const out = { questions: [], errors: [], warnings: [] };
+  if (!Array.isArray(rows) || !rows.length) { out.errors.push({ row: 0, msg: 'Tidak ada data.' }); return out; }
+  let start = 0, cols = DEFAULT_COLS;
+  for (let i = 0; i < Math.min(rows.length, 5); i++) { const h = mapHeader(rows[i]); if (h) { cols = h; start = i + 1; break; } }
+  const perPos = {};
+  for (let r = start; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const get = k => cols[k] === undefined ? '' : clean(row[cols[k]]).slice(0, MAX_LEN);
+    const vals = ['pos', 'q', 'A', 'B', 'key'].map(get);
+    if (vals.every(v => !v) && !get('materi')) continue;          // baris kosong
+    const ln = r + 1, errs = [];
+    const pos = resolvePos(get('pos'));
+    if (pos < 0) errs.push(`Pos "${get('pos') || '(kosong)'}" tidak dikenal (pakai 1–16 atau nama pos)`);
+    const q = get('q'); if (!q) errs.push('Soal kosong');
+    const opts = ['A', 'B', 'C', 'D'].map(get);
+    while (opts.length && !opts[opts.length - 1]) opts.pop();
+    if (opts.length < 2) errs.push('Minimal pilihan A dan B harus diisi');
+    if (opts.some(o => !o)) errs.push('Ada pilihan kosong di tengah (isi berurutan A, B, C, D)');
+    const a = parseKey(get('key'), opts);
+    if (a < 0) errs.push(`Kunci "${get('key') || '(kosong)'}" tidak valid (isi A/B/C/D)`);
+    else if (a >= opts.length || !opts[a]) errs.push(`Kunci ${'ABCD'[a]} menunjuk pilihan yang kosong`);
+    if (errs.length) { out.errors.push({ row: ln, msg: errs.join('; ') }); continue; }
+    if (out.questions.length >= MAX_Q) { out.errors.push({ row: ln, msg: `Melebihi batas ${MAX_Q} soal` }); continue; }
+    perPos[pos] = (perPos[pos] || 0) + 1;
+    if (perPos[pos] > MAX_PER_POS) { out.errors.push({ row: ln, msg: `Pos ${pos + 1} sudah berisi ${MAX_PER_POS} soal (batas maksimum)` }); continue; }
+    let materi = get('materi'), sub = get('sub');
+    if (!materi) { materi = 'Umum'; out.warnings.push({ row: ln, msg: 'Materi kosong, diisi "Umum"' }); }
+    if (!sub) sub = materi;
+    out.questions.push({ id: 'q' + (out.questions.length + 1), pos, materi, sub, q, o: opts, a, e: get('e') });
+  }
+  if (!out.questions.length && !out.errors.length) out.errors.push({ row: 0, msg: 'Tidak ada soal yang terbaca.' });
+  return out;
+}
+
+function validateBank(b) {
+  const errs = [];
+  if (!b || !Array.isArray(b.questions)) return ['Format paket tidak dikenal'];
+  const ids = new Set();
+  b.questions.forEach((q, i) => {
+    if (!q || typeof q.q !== 'string' || !q.q) errs.push(`Soal ${i + 1}: teks kosong`);
+    if (!(q.pos >= 0 && q.pos < 16)) errs.push(`Soal ${i + 1}: pos tidak valid`);
+    if (!Array.isArray(q.o) || q.o.length < 2 || q.o.length > 4 || q.o.some(o => typeof o !== 'string' || !o)) errs.push(`Soal ${i + 1}: pilihan tidak valid`);
+    else if (!(q.a >= 0 && q.a < q.o.length)) errs.push(`Soal ${i + 1}: kunci tidak valid`);
+    if (ids.has(q.id)) errs.push(`Soal ${i + 1}: id ganda`); ids.add(q.id);
+  });
+  if (!b.questions.length) errs.push('Paket belum berisi soal');
+  return errs;
+}
+function sanitizeBank(b) {
+  const qs = (b.questions || []).slice(0, MAX_Q).map((q, i) => ({
+    id: String(q.id || 'q' + (i + 1)).slice(0, 20), pos: q.pos | 0, materi: String(q.materi || 'Umum').slice(0, 80),
+    sub: String(q.sub || q.materi || 'Umum').slice(0, 80), q: String(q.q || '').slice(0, MAX_LEN),
+    o: (q.o || []).slice(0, 4).map(o => String(o).slice(0, MAX_LEN)), a: q.a | 0, e: String(q.e || '').slice(0, MAX_LEN)
+  }));
+  return { id: String(b.id || ''), name: String(b.name || 'Paket').slice(0, 80), builtin: !!b.builtin, questions: qs };
+}
+
+// ---------- pengacak deterministik ----------
+function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function shuffleQ(q) {
+  let s = hash(q.q) || 1; const rnd = () => (s = Math.imul(s ^ (s >>> 15), 2246822507) + 0x9e3779b9 >>> 0, s / 4294967296);
+  const idx = q.o.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return Object.assign({}, q, { o: idx.map(i => q.o[i]), a: idx.indexOf(q.a) });
+}
+
+// ---------- paket bawaan: Al-Qur'an Hadis Kelas 5 Semester 1 ----------
+// [pos, materi, sub, soal, [benar, salah1, salah2, salah3], pembahasan]
+const B1 = "Bab 1 · QS Al-'Adiyat", B2 = 'Bab 2 · QS At-Tin', B3 = 'Bab 3 · Hukum Mim Sukun', B4 = 'Bab 4 · Hadis Menyayangi Anak Yatim';
+const AQH = [
+ // Bab 1 — Masjid (0), Madrasah (1), Perpustakaan (2), Rumah Adat (6)
+ [0,B1,'Mengenal surah',"QS Al-'Adiyat adalah surah ke- … dalam Al-Qur'an.",['100','95','105','110'],"QS Al-'Adiyat adalah surah ke-100 dalam mushaf Al-Qur'an."],
+ [0,B1,'Mengenal surah',"Jumlah ayat QS Al-'Adiyat adalah …",['11 ayat','8 ayat','10 ayat','12 ayat'],"QS Al-'Adiyat terdiri dari 11 ayat."],
+ [0,B1,'Mengenal surah',"QS Al-'Adiyat termasuk golongan surah …",['Makkiyah','Madaniyah','Hadis Qudsi','Hadis Nabawi'],'Surah Makkiyah adalah surah yang turun di Mekah sebelum Nabi hijrah.'],
+ [0,B1,'Mengenal surah',"Nama “Al-'Adiyat” artinya …",['Kuda perang yang berlari kencang','Buah tin','Hari kiamat','Debu yang beterbangan'],"Al-'Adiyat berarti kuda perang yang berlari kencang."],
+ [1,B1,'Lafal & urutan ayat','Lanjutan ayat وَالْعَادِيَاتِ ضَبْحًا adalah …',['فَالْمُورِيَاتِ قَدْحًا','وَطُورِ سِينِينَ','فَأَثَرْنَ بِهِ نَقْعًا','وَحُصِّلَ مَا فِي الصُّدُورِ'],'Ayat 1 dilanjutkan ayat 2: فَالْمُورِيَاتِ قَدْحًا'],
+ [1,B1,'Lafal & urutan ayat','Ayat إِنَّ الْإِنْسَانَ لِرَبِّهِ لَكَنُودٌ adalah ayat ke- …',['6','4','5','7'],"Ayat tersebut adalah ayat ke-6 QS Al-'Adiyat."],
+ [1,B1,'Lafal & urutan ayat',"Ayat terakhir QS Al-'Adiyat adalah …",['إِنَّ رَبَّهُمْ بِهِمْ يَوْمَئِذٍ لَخَبِيرٌ','أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ','وَحُصِّلَ مَا فِي الصُّدُورِ','فَوَسَطْنَ بِهِ جَمْعًا'],'Ayat ke-11 (terakhir): إِنَّ رَبَّهُمْ بِهِمْ يَوْمَئِذٍ لَخَبِيرٌ'],
+ [1,B1,'Lafal & urutan ayat','Lanjutan ayat فَأَثَرْنَ بِهِ نَقْعًا adalah …',['فَوَسَطْنَ بِهِ جَمْعًا','وَالتِّينِ وَالزَّيْتُونِ','وَإِنَّهُ لِحُبِّ الْخَيْرِ لَشَدِيدٌ','فَالْمُغِيرَاتِ صُبْحًا'],'Ayat 4 dilanjutkan ayat 5: فَوَسَطْنَ بِهِ جَمْعًا'],
+ [2,B1,'Arti kata & ayat','Kata لَكَنُودٌ artinya …',['Sangat ingkar (tidak bersyukur)','Sangat dermawan','Sangat kuat','Sangat cepat'],'لَكَنُودٌ berarti sangat ingkar atau tidak bersyukur kepada Allah.'],
+ [2,B1,'Arti kata & ayat','Kata نَقْعًا artinya …',['Debu','Api','Kuda','Pagi hari'],'نَقْعًا artinya debu yang beterbangan.'],
+ [2,B1,'Arti kata & ayat','Arti ayat وَإِنَّهُ لِحُبِّ الْخَيْرِ لَشَدِيدٌ adalah …',['Dan sesungguhnya cintanya kepada harta benar-benar berlebihan','Demi kuda perang yang berlari kencang','Dan apa yang tersimpan di dalam dada dilahirkan','Sungguh Tuhan mereka Mahateliti'],'Ayat 8 menjelaskan manusia sangat mencintai harta.'],
+ [2,B1,'Arti kata & ayat','Kata لَخَبِيرٌ pada ayat terakhir artinya …',['Mahateliti','Maha Pengasih','Mahabesar','Maha Pemberi Rezeki'],'لَخَبِيرٌ berarti Mahateliti; Allah mengetahui keadaan manusia dengan sangat teliti.'],
+ [6,B1,'Isi kandungan & perilaku',"Ayat 6–8 QS Al-'Adiyat menjelaskan sifat manusia, yaitu …",['Ingkar kepada Tuhannya dan sangat cinta harta','Rajin bersedekah','Selalu bersyukur','Suka menolong'],'Ayat 6–8 menyebut manusia ingkar kepada Tuhannya dan sangat mencintai harta.'],
+ [6,B1,'Isi kandungan & perilaku','Ayat 9–11 mengingatkan bahwa …',['Isi kubur akan dibangkitkan dan Allah mengetahui isi hati manusia','Kuda perang sangat kuat','Manusia tidak akan dihisab','Harta bisa menyelamatkan di akhirat'],'Ayat 9–11 menjelaskan hari kebangkitan dan Allah Mahateliti terhadap isi hati.'],
+ [6,B1,'Isi kandungan & perilaku',"Contoh perilaku sesuai pesan QS Al-'Adiyat adalah …",['Bersyukur dan menyisihkan uang jajan untuk sedekah','Menyimpan semua uang untuk diri sendiri','Iri melihat mainan teman','Menghabiskan uang untuk jajan'],'Kita diajak bersyukur dan tidak berlebihan mencintai harta.'],
+ [6,B1,'Isi kandungan & perilaku','Kuda perang taat kepada pemiliknya. Pelajaran untuk kita adalah …',['Manusia lebih pantas taat dan bersyukur kepada Allah','Kuda lebih mulia daripada manusia','Kita boleh bermalas-malasan','Kita harus selalu berperang'],'Allah bersumpah dengan kuda yang patuh, sementara manusia sering ingkar. Kita harus taat dan bersyukur.'],
+ // Bab 2 — Sawah (13), Pasar (4), Toko (10), Taman (15)
+ [13,B2,'Mengenal surah',"QS At-Tin adalah surah ke- … dalam Al-Qur'an.",['95','100','94','97'],'QS At-Tin adalah surah ke-95.'],
+ [13,B2,'Mengenal surah','Jumlah ayat QS At-Tin adalah …',['8 ayat','11 ayat','6 ayat','19 ayat'],'QS At-Tin terdiri dari 8 ayat.'],
+ [13,B2,'Mengenal surah','Nama “At-Tin” artinya …',['Buah tin','Buah zaitun','Kuda perang','Gunung Sinai'],'At-Tin berarti buah tin.'],
+ [13,B2,'Mengenal surah','Buah tin dan zaitun disebut pada ayat ke- …',['1','2','3','4'],'Ayat 1: وَالتِّينِ وَالزَّيْتُونِ'],
+ [4,B2,'Lafal & urutan ayat','Lanjutan ayat وَالتِّينِ وَالزَّيْتُونِ adalah …',['وَطُورِ سِينِينَ','وَهَٰذَا الْبَلَدِ الْأَمِينِ','فَالْمُورِيَاتِ قَدْحًا','ثُمَّ رَدَدْنَاهُ أَسْفَلَ سَافِلِينَ'],'Ayat 1 dilanjutkan ayat 2: وَطُورِ سِينِينَ'],
+ [4,B2,'Lafal & urutan ayat','Ayat لَقَدْ خَلَقْنَا الْإِنْسَانَ فِي أَحْسَنِ تَقْوِيمٍ adalah ayat ke- …',['4','3','5','6'],'Ayat tersebut adalah ayat ke-4 QS At-Tin.'],
+ [4,B2,'Lafal & urutan ayat','Ayat terakhir QS At-Tin adalah …',['أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ','فَمَا يُكَذِّبُكَ بَعْدُ بِالدِّينِ','إِنَّ رَبَّهُمْ بِهِمْ يَوْمَئِذٍ لَخَبِيرٌ','وَطُورِ سِينِينَ'],'Ayat ke-8 (terakhir): أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ'],
+ [4,B2,'Lafal & urutan ayat','Lanjutan ayat ثُمَّ رَدَدْنَاهُ أَسْفَلَ سَافِلِينَ adalah …',['إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ فَلَهُمْ أَجْرٌ غَيْرُ مَمْنُونٍ','لَقَدْ خَلَقْنَا الْإِنْسَانَ فِي أَحْسَنِ تَقْوِيمٍ','وَهَٰذَا الْبَلَدِ الْأَمِينِ','فَوَسَطْنَ بِهِ جَمْعًا'],'Ayat 5 dilanjutkan ayat 6.'],
+ [10,B2,'Arti kata & ayat','أَحْسَنِ تَقْوِيمٍ artinya …',['Bentuk yang sebaik-baiknya','Tempat yang serendah-rendahnya','Negeri yang aman','Pahala yang tidak putus'],'Manusia diciptakan dalam bentuk yang sebaik-baiknya.'],
+ [10,B2,'Arti kata & ayat','الْبَلَدِ الْأَمِينِ (negeri yang aman) pada ayat 3 adalah kota …',['Mekah','Madinah','Yerusalem','Kairo'],'Negeri yang aman dalam ayat 3 adalah kota Mekah.'],
+ [10,B2,'Arti kata & ayat','طُورِ سِينِينَ artinya …',['Gunung (Bukit) Sinai','Buah zaitun','Kota Mekah','Padang pasir'],'طُورِ سِينِينَ berarti Gunung/Bukit Sinai.'],
+ [10,B2,'Arti kata & ayat','Arti ayat أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ adalah …',['Bukankah Allah hakim yang paling adil?','Sungguh Tuhan mereka Mahateliti','Demi buah tin dan zaitun','Maka apa yang menyebabkan mereka mendustakanmu?'],'Ayat 8 menegaskan Allah adalah hakim yang paling adil.'],
+ [15,B2,'Isi kandungan & perilaku','Menurut ayat 4 QS At-Tin, manusia diciptakan …',['Dalam bentuk yang sebaik-baiknya','Dari api','Dalam bentuk yang buruk','Tanpa akal'],'Allah menciptakan manusia dalam bentuk yang paling baik.'],
+ [15,B2,'Isi kandungan & perilaku','Menurut ayat 6, yang mendapat pahala tidak putus-putus adalah …',['Orang yang beriman dan beramal saleh','Orang yang kaya','Orang yang kuat','Orang yang pandai saja'],'Pahala tidak putus diberikan kepada orang beriman dan beramal saleh.'],
+ [15,B2,'Isi kandungan & perilaku','Bukit Sinai yang disebut dalam QS At-Tin adalah tempat Nabi … menerima wahyu.',['Musa a.s.','Ibrahim a.s.','Isa a.s.','Nuh a.s.'],'Bukit Sinai (Tursina) adalah tempat Nabi Musa a.s. menerima wahyu.'],
+ [15,B2,'Isi kandungan & perilaku','Contoh perilaku sesuai pesan QS At-Tin adalah …',['Merawat tubuh dengan olahraga dan makan makanan sehat','Mengejek bentuk tubuh teman','Malas beribadah karena merasa sempurna','Merusak tanaman di taman'],'Mensyukuri tubuh yang diciptakan sebaik-baiknya dengan merawatnya dan beramal saleh.'],
+ // Bab 3 — Balai Desa (5), Kantor Pos (7), Rumah Warga (11), Dermaga (12)
+ [5,B3,'Pengertian mim sukun','Mim sukun adalah …',['Huruf mim yang tidak berharakat (mati)','Huruf mim berharakat fathah','Huruf mim bertasydid','Huruf mim berharakat kasrah'],'Mim sukun adalah mim mati, ditulis مْ.'],
+ [5,B3,'Pengertian mim sukun','Hukum bacaan mim sukun ada … macam.',['3','2','4','5'],'Ada 3: ikhfa syafawi, idgham mimi, dan izhar syafawi.'],
+ [5,B3,'Pengertian mim sukun','Tanda mim sukun dalam Al-Qur’an ditulis …',['مْ','مَ','مِ','مُّ'],'Mim sukun ditandai dengan sukun di atas mim: مْ'],
+ [5,B3,'Pengertian mim sukun','Kata “syafawi” artinya …',['Bibir','Tenggorokan','Lidah','Hidung'],'Syafawi berarti bibir, karena mim dan ba keluar dari dua bibir.'],
+ [7,B3,'Ikhfa syafawi','Ikhfa syafawi terjadi jika mim sukun bertemu huruf …',['ب (ba)','م (mim)','ن (nun)','و (wau)'],'Ikhfa syafawi: mim sukun bertemu huruf ba.'],
+ [7,B3,'Ikhfa syafawi','Cara membaca ikhfa syafawi adalah …',['Samar disertai dengung di bibir','Jelas tanpa dengung','Dimasukkan tanpa dengung','Dipanjangkan dua harakat'],'Ikhfa syafawi dibaca samar dengan dengung.'],
+ [7,B3,'Ikhfa syafawi','Contoh bacaan ikhfa syafawi adalah …',['تَرْمِيهِمْ بِحِجَارَةٍ','لَهُمْ مَا','أَلَمْ تَرَ','عَلَيْهِمْ نَارٌ'],'تَرْمِيهِمْ بِحِجَارَةٍ: mim sukun bertemu ba.'],
+ [7,B3,'Ikhfa syafawi',"Bacaan رَبَّهُمْ بِهِمْ pada QS Al-'Adiyat ayat 11 hukumnya …",['Ikhfa syafawi','Idgham mimi','Izhar syafawi','Iqlab'],'Mim sukun pada رَبَّهُمْ bertemu ba pada بِهِمْ, maka ikhfa syafawi.'],
+ [11,B3,'Idgham mimi','Idgham mimi terjadi jika mim sukun bertemu huruf …',['م (mim)','ب (ba)','ل (lam)','ف (fa)'],'Idgham mimi: mim sukun bertemu mim.'],
+ [11,B3,'Idgham mimi','Nama lain idgham mimi adalah …',['Idgham mitslain','Idgham bighunnah','Ikhfa haqiqi','Izhar halqi'],'Idgham mimi disebut juga idgham mitslain (dua huruf yang sama).'],
+ [11,B3,'Idgham mimi','Contoh bacaan idgham mimi adalah …',['كَمْ مِنْ','أَمْ لَمْ','هُمْ فِيهَا','أَنْتُمْ عَابِدُونَ'],'كَمْ مِنْ: mim sukun bertemu mim.'],
+ [11,B3,'Idgham mimi','Cara membaca idgham mimi adalah …',['Mim pertama dimasukkan ke mim kedua disertai dengung','Dibaca jelas tanpa dengung','Dibaca samar tanpa dengung','Mim diganti menjadi ba'],'Idgham mimi dibaca dengan memasukkan mim ke mim berikutnya disertai dengung.'],
+ [12,B3,'Izhar syafawi','Izhar syafawi terjadi jika mim sukun bertemu …',['Semua huruf hijaiah selain mim dan ba','Huruf mim saja','Huruf ba saja','Huruf halqi saja'],'Izhar syafawi: mim sukun bertemu huruf selain mim dan ba.'],
+ [12,B3,'Izhar syafawi','Cara membaca izhar syafawi adalah …',['Jelas tanpa dengung','Samar dengan dengung','Dengung tiga harakat','Dilebur ke huruf berikutnya'],'Izhar artinya jelas, dibaca tanpa dengung.'],
+ [12,B3,'Izhar syafawi','Contoh bacaan izhar syafawi adalah …',['أَلَمْ تَرَ','لَهُمْ مَا','تَرْمِيهِمْ بِحِجَارَةٍ','كَمْ مِنْ'],'أَلَمْ تَرَ: mim sukun bertemu ta, maka izhar syafawi.'],
+ [12,B3,'Izhar syafawi','Bacaan فَلَهُمْ أَجْرٌ pada QS At-Tin ayat 6 hukumnya …',['Izhar syafawi','Ikhfa syafawi','Idgham mimi','Idgham bighunnah'],'Mim sukun bertemu hamzah, maka izhar syafawi.'],
+ // Bab 4 — Puskesmas (3), Kantor Polisi (9), Pemadam (8), Lapangan (14)
+ [3,B4,'Lafal & kosakata hadis','Lanjutan hadis أَنَا وَكَافِلُ الْيَتِيمِ … adalah …',['فِي الْجَنَّةِ هٰكَذَا','فِي الدُّنْيَا هٰكَذَا','فِي الْمَسْجِدِ هٰكَذَا','فِي الْبَيْتِ هٰكَذَا'],'أَنَا وَكَافِلُ الْيَتِيمِ فِي الْجَنَّةِ هٰكَذَا'],
+ [3,B4,'Lafal & kosakata hadis','Hadis tentang menyayangi anak yatim ini diriwayatkan oleh …',['Imam Bukhari','Imam Malik','Imam Syafi’i','Imam Hanafi'],'Hadis ini diriwayatkan oleh Imam Bukhari.'],
+ [3,B4,'Lafal & kosakata hadis','Kata الْيَتِيمِ artinya …',['Anak yatim','Orang tua','Orang kaya','Tetangga'],'الْيَتِيمِ berarti anak yatim.'],
+ [3,B4,'Lafal & kosakata hadis','Kata كَافِلُ artinya …',['Orang yang menanggung/mengasuh','Orang yang meminta-minta','Orang yang berjalan','Orang yang tidur'],'كَافِلُ berarti orang yang menanggung atau mengasuh.'],
+ [9,B4,'Arti hadis','“Aku dan orang yang menanggung anak yatim di … seperti ini.”',['Surga','Dunia','Masjid','Pasar'],'Arti hadis: Aku dan orang yang menanggung anak yatim di surga seperti ini.'],
+ [9,B4,'Arti hadis','Dalam hadis itu Rasulullah saw. memberi isyarat dengan jari …',['Telunjuk dan jari tengah','Ibu jari dan kelingking','Jari manis dan kelingking','Semua jari'],'Beliau berisyarat dengan jari telunjuk dan jari tengah.'],
+ [9,B4,'Arti hadis','Kata الْجَنَّةِ artinya …',['Surga','Neraka','Dunia','Rumah'],'الْجَنَّةِ berarti surga.'],
+ [9,B4,'Arti hadis','Arti وَأَشَارَ بِالسَّبَّابَةِ وَالْوُسْطَى adalah …',['Dan beliau berisyarat dengan jari telunjuk dan jari tengah','Dan beliau tersenyum kepada anak yatim','Dan beliau duduk bersama sahabat','Dan beliau berdoa di masjid'],'السَّبَّابَة = jari telunjuk, الْوُسْطَى = jari tengah.'],
+ [8,B4,'Isi kandungan hadis','Anak yatim adalah anak yang …',['Ditinggal wafat ayahnya sebelum balig','Ditinggal ibunya ke pasar','Tidak punya saudara','Sudah dewasa'],'Yatim adalah anak yang ayahnya wafat ketika ia belum balig.'],
+ [8,B4,'Isi kandungan hadis','Orang yang menyayangi dan menanggung anak yatim akan …',['Dekat dengan Rasulullah saw. di surga','Cepat menjadi kaya','Menjadi pemimpin','Tidak perlu beribadah'],'Penanggung anak yatim akan dekat dengan Rasulullah saw. di surga.'],
+ [8,B4,'Isi kandungan hadis','Isyarat dua jari yang berdekatan menunjukkan …',['Dekatnya kedudukan penanggung anak yatim dengan Rasulullah di surga','Jumlah anak yatim ada dua','Rasulullah sedang berhitung','Larangan menyayangi anak yatim'],'Dua jari yang berdekatan menggambarkan kedekatan di surga.'],
+ [8,B4,'Isi kandungan hadis','Rasulullah saw. juga seorang yatim karena ayahnya, …, wafat sebelum beliau lahir.',['Abdullah','Abu Thalib','Abdul Muthalib','Abu Bakar'],'Ayah Rasulullah saw. adalah Abdullah, wafat sebelum beliau lahir.'],
+ [14,B4,'Perilaku menyayangi yatim','Contoh sikap menyayangi anak yatim adalah …',['Berbagi makanan dan mengajaknya bermain','Mengejeknya','Menjauhinya','Mengambil barang miliknya'],'Menyayangi anak yatim bisa dengan berbagi dan bermain bersama.'],
+ [14,B4,'Perilaku menyayangi yatim','Teman sekelasmu yang yatim terlihat sedih. Sikapmu …',['Menghibur dan menemaninya','Membiarkannya saja','Menertawakannya','Menceritakannya ke semua orang'],'Menghibur dan menemani adalah bentuk kasih sayang.'],
+ [14,B4,'Perilaku menyayangi yatim','Kegiatan santunan anak yatim di madrasah sebaiknya …',['Didukung dengan ikhlas menyisihkan uang jajan','Diabaikan','Dijadikan bahan candaan','Hanya untuk orang kaya'],'Kita bisa ikut menyantuni dengan ikhlas, walau sedikit.'],
+ [14,B4,'Perilaku menyayangi yatim','Sikap yang dilarang terhadap anak yatim adalah …',['Menghardik dan berbuat kasar','Menyantuni','Menyayangi','Membantu belajar'],'Menghardik anak yatim dilarang dalam Islam.']
+];
+function presetBank() {
+  const questions = AQH.map((r, i) => shuffleQ({ id: 'q' + (i + 1), pos: r[0], materi: r[1], sub: r[2], q: r[3], o: r[4].slice(), a: 0, e: r[5] }));
+  return { id: 'preset-aqh5-1', name: "Al-Qur'an Hadis Kelas 5 Semester 1 (bawaan)", builtin: true, questions };
+}
+
+// ---------- skor & analisis ----------
+function byPos(bank) { const m = {}; for (const q of bank.questions) (m[q.pos] = m[q.pos] || []).push(q); return m; }
+function activePosts(bank) {
+  const m = byPos(bank);
+  return Object.keys(m).map(Number).sort((a, b) => a - b).map(p => ({ pos: p, count: m[p].length, materi: [...new Set(m[p].map(q => q.materi))] }));
+}
+// answers: {qid: choiceIndex}
+function scoreOf(bank, answers, coins, star) {
+  answers = answers || {}; let correct = 0, answered = 0; const done = [];
+  const m = byPos(bank);
+  for (const q of bank.questions) if (answers[q.id] !== undefined) { answered++; if (answers[q.id] === q.a) correct++; }
+  for (const p in m) if (m[p].every(q => answers[q.id] !== undefined)) done.push(+p);
+  const c = Math.max(0, Math.min(SCORE.maxCoins, coins | 0));
+  const score = correct * SCORE.ok + done.length * SCORE.bonus + c * SCORE.coin + (star ? SCORE.star : 0);
+  return { score, correct, answered, done, total: bank.questions.length, nilai: bank.questions.length ? Math.round(correct / bank.questions.length * 100) : 0 };
+}
+function level(pct) { return pct == null ? 'belum' : pct >= LV.tuntas ? 'tuntas' : pct >= LV.penguatan ? 'penguatan' : 'remedial'; }
+const pctOf = o => o && o.n ? Math.round(o.c / o.n * 100) : null;
+
+// players: [{sid,name,answers:{qid:idx},coins,star}]
+function stats(bank, players) {
+  const qmap = {}; bank.questions.forEach(q => qmap[q.id] = q);
+  const materiList = [...new Set(bank.questions.map(q => q.materi))];
+  const subList = []; const subSeen = new Set();
+  bank.questions.forEach(q => { const k = q.materi + '||' + q.sub; if (!subSeen.has(k)) { subSeen.add(k); subList.push({ materi: q.materi, sub: q.sub, key: k }); } });
+  const qs = {}; bank.questions.forEach(q => qs[q.id] = { n: 0, c: 0, counts: q.o.map(() => 0) });
+  const students = (players || []).map(p => {
+    const ans = p.answers || {}; const perM = {}, perS = {}; const wrong = [];
+    for (const qid in ans) {
+      const q = qmap[qid]; if (!q) continue; const ch = ans[qid]; const ok = ch === q.a;
+      const s = qs[qid]; s.n++; if (ok) s.c++; if (ch >= 0 && ch < s.counts.length) s.counts[ch]++;
+      const m = perM[q.materi] = perM[q.materi] || { c: 0, n: 0 }; m.n++; if (ok) m.c++;
+      const sk = q.materi + '||' + q.sub; const ss = perS[sk] = perS[sk] || { c: 0, n: 0 }; ss.n++; if (ok) ss.c++;
+      if (!ok) wrong.push(qid);
+    }
+    const sc = scoreOf(bank, ans, p.coins, p.star);
+    return { sid: p.sid, name: p.name, score: sc.score, correct: sc.correct, answered: sc.answered, done: sc.done.length, nilai: sc.nilai,
+      coins: p.coins | 0, star: !!p.star, perMateri: perM, perSub: perS, wrong };
+  });
+  const materi = materiList.map(name => {
+    let c = 0, n = 0; students.forEach(s => { const m = s.perMateri[name]; if (m) { c += m.c; n += m.n; } });
+    return { name, avg: n ? Math.round(c / n * 100) : null, n };
+  });
+  const subs = subList.map(o => {
+    let c = 0, n = 0; students.forEach(s => { const m = s.perSub[o.key]; if (m) { c += m.c; n += m.n; } });
+    return Object.assign({}, o, { avg: n ? Math.round(c / n * 100) : null, n });
+  });
+  const questions = bank.questions.map((q, i) => {
+    const s = qs[q.id]; let tw = -1, twc = 0;
+    s.counts.forEach((c, k) => { if (k !== q.a && c > twc) { tw = k; twc = c; } });
+    return { no: i + 1, id: q.id, pos: q.pos, materi: q.materi, sub: q.sub, q: q.q, o: q.o, a: q.a, n: s.n, c: s.c,
+      pct: s.n ? Math.round(s.c / s.n * 100) : null, topWrong: tw, topWrongN: twc, topWrongPct: s.n ? Math.round(twc / s.n * 100) : 0 };
+  });
+  const remedial = materiList.map(name => {
+    const g = { materi: name, avg: (materi.find(m => m.name === name) || {}).avg, remedial: [], penguatan: [], tuntas: [], belum: [] };
+    students.forEach(s => g[level(pctOf(s.perMateri[name]))].push(s.name));
+    return g;
+  });
+  return { students, materi, subs, questions, remedial, materiList, subList };
+}
+function studentReport(bank, answers) {
+  const st = stats(bank, [{ sid: 'x', name: 'x', answers }]).students[0];
+  const list = Object.keys(st.perMateri).map(m => ({ m, p: pctOf(st.perMateri[m]) }));
+  const subl = Object.keys(st.perSub).map(k => ({ m: k.split('||')[1], p: pctOf(st.perSub[k]) }));
+  return { strong: list.filter(x => x.p >= LV.tuntas).sort((a, b) => b.p - a.p).map(x => x.m),
+    weak: list.filter(x => x.p < LV.tuntas).sort((a, b) => a.p - b.p).map(x => x.m),
+    weakSub: subl.filter(x => x.p < LV.penguatan).sort((a, b) => a.p - b.p).map(x => x.m).slice(0, 3) };
+}
+
+// ---------- isi lembar Excel (array of arrays) ----------
+const L = 'ABCD';
+function templateSheets(bank) {
+  const head = ['Pos', 'Materi', 'Sub-materi', 'Soal', 'A', 'B', 'C', 'D', 'Kunci', 'Pembahasan'];
+  const rows = bank ? bank.questions.map(q => [POSTS[q.pos].name, q.materi, q.sub, q.q, q.o[0] || '', q.o[1] || '', q.o[2] || '', q.o[3] || '', L[q.a], q.e || ''])
+    : [['Masjid', 'Bab 1 · Contoh', 'Sub-materi contoh', 'Tulis soal di sini …', 'Pilihan A', 'Pilihan B', 'Pilihan C', 'Pilihan D', 'A', 'Penjelasan singkat jawaban benar']];
+  const petunjuk = [['PETUNJUK MENGISI TEMPLATE SOAL – Kampung Belajar 3D'], [''],
+    ['1. Isi lembar "Soal": satu baris = satu soal. Jangan ubah judul kolom.'],
+    ['2. Kolom Pos: tulis nomor 1–16 atau nama pos (lihat lembar "Daftar Pos").'],
+    ['3. Kolom Materi: nama bab/materi. Dipakai untuk analisis kelemahan siswa.'],
+    ['4. Kolom Sub-materi: bagian lebih rinci (boleh kosong).'],
+    ['5. Pilihan A dan B wajib; C dan D boleh kosong (isi berurutan).'],
+    ['6. Kunci: huruf A, B, C, atau D.'],
+    ['7. Disarankan 4 soal per pos (maksimal ' + MAX_PER_POS + '). Total maksimal ' + MAX_Q + ' soal.'],
+    ['8. Pos yang tidak diisi soal tidak akan menyala di dalam game.'],
+    ['9. Teks Arab boleh langsung ditempel ke kolom soal atau pilihan.']];
+  const daftar = [['No', 'Nama Pos']].concat(POSTS.map(p => [p.id + 1, p.name]));
+  return [{ name: 'Soal', aoa: [head].concat(rows), cols: [16, 22, 22, 50, 26, 26, 26, 26, 7, 40] },
+    { name: 'Petunjuk', aoa: petunjuk, cols: [90] }, { name: 'Daftar Pos', aoa: daftar, cols: [6, 24] }];
+}
+function analysisSheets(bank, st, meta) {
+  meta = meta || {};
+  const info = [['Kelas', meta.kelas || '-'], ['Paket soal', bank.name], ['Tanggal', meta.date || ''], ['Jumlah soal', bank.questions.length], ['Jumlah siswa', st.students.length], []];
+  const rek = info.concat([['No', 'Nama', 'Nilai (0–100)', 'Skor Game', 'Benar', 'Dijawab', 'Pos Selesai', 'Koin', 'Bintang']]);
+  [...st.students].sort((a, b) => b.score - a.score).forEach((s, i) => rek.push([i + 1, s.name, s.nilai, s.score, s.correct, s.answered, s.done, s.coins, s.star ? 'Ya' : '-']));
+  const cell = o => { const p = pctOf(o); return p == null ? 'belum' : p; };
+  const pm = [['Nama'].concat(st.materiList).concat(st.subList.map(s => s.sub + ' (' + s.materi.split('·')[0].trim() + ')'))];
+  st.students.forEach(s => pm.push([s.name].concat(st.materiList.map(m => cell(s.perMateri[m]))).concat(st.subList.map(o => cell(s.perSub[o.key])))));
+  pm.push(['RATA-RATA KELAS'].concat(st.materi.map(m => m.avg == null ? '-' : m.avg)).concat(st.subs.map(s => s.avg == null ? '-' : s.avg)));
+  pm.push([]); pm.push(['Keterangan: angka = % jawaban benar. ≥75 tuntas, 50–74 perlu penguatan, <50 perlu remedial, "belum" = belum mengerjakan.']);
+  const an = [['No', 'Pos', 'Materi', 'Sub-materi', 'Soal', 'Kunci', 'Jawaban Benar', '% Benar', 'Jumlah Menjawab', 'Jawaban Salah Terbanyak', '% Memilih']];
+  [...st.questions].sort((a, b) => (a.pct == null ? 101 : a.pct) - (b.pct == null ? 101 : b.pct)).forEach(q => an.push([q.no, POSTS[q.pos].name, q.materi, q.sub, q.q, L[q.a], q.o[q.a], q.pct == null ? '-' : q.pct, q.n,
+    q.topWrong >= 0 ? L[q.topWrong] + '. ' + q.o[q.topWrong] : '-', q.topWrong >= 0 ? q.topWrongPct : '-']));
+  const rm = [['Materi', 'Rata-rata Kelas (%)', 'Perlu Remedial (<50%)', 'Perlu Penguatan (50–74%)', 'Tuntas (≥75%)', 'Belum Mengerjakan']];
+  st.remedial.forEach(g => rm.push([g.materi, g.avg == null ? '-' : g.avg, g.remedial.join(', ') || '-', g.penguatan.join(', ') || '-', g.tuntas.join(', ') || '-', g.belum.join(', ') || '-']));
+  return [{ name: 'Rekap Nilai', aoa: rek, cols: [5, 22, 12, 11, 8, 9, 11, 7, 8] },
+    { name: 'Peta Penguasaan', aoa: pm, cols: [22].concat(pm[0].slice(1).map(() => 16)) },
+    { name: 'Analisis Soal', aoa: an, cols: [5, 18, 24, 22, 50, 7, 30, 9, 10, 32, 10] },
+    { name: 'Kelompok Remedial', aoa: rm, cols: [30, 12, 40, 40, 40, 30] }];
+}
+
+G.Core = { POSTS, SCORE, LV, MAX_PER_POS, MAX_Q, norm, resolvePos, parseKey, parseTSV, mapHeader, importRows, validateBank, sanitizeBank,
+  presetBank, shuffleQ, activePosts, scoreOf, level, pctOf, stats, studentReport, templateSheets, analysisSheets, byPos };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+
+<script>
+/* Kampung Belajar 3D — dunia 3D (bangunan, jalan, laut, obby, koin) */
+(function (G) {
+'use strict';
+const T = G.THREE;
+const W = G.World = { colliders: [], coins: [], markers: {}, signs: {}, dyn: [], clouds: [], podium: [], spawn: [-30, 5] };
+const MC = {};
+const M = c => MC[c] || (MC[c] = new T.MeshLambertMaterial({ color: c }));
+const statics = [];
+let scene;
+
+// ---------- slot 16 pos: [cx, cz, face] (face +1 = depan menghadap +z) ----------
+const SLOT = {
+  13: [-85, -58, 1], 0: [-30, -58, 1], 1: [30, -58, 1], 2: [85, -58, 1],
+  6: [-85, -22, 1], 4: [-30, -22, 1], 10: [30, -22, 1], 15: [85, -22, 1],
+  5: [-85, 22, -1], 14: [-30, 22, -1], 7: [30, 22, -1], 11: [85, 22, -1],
+  3: [-85, 58, -1], 9: [-30, 58, -1], 8: [30, 58, -1], 12: [85, 58, -1]
+};
+W.SLOT = SLOT;
+W.spotOf = id => { const s = SLOT[id]; return [s[0], s[1] + s[2] * 10]; };
+const BOUND = { x0: -104, x1: 104, z0: -86, z1: 66 };
+const PIER = { x0: 83.3, x1: 86.7, z1: 79.5 };
+
+// ---------- helper ----------
+function frame(id) { const s = SLOT[id]; return { cx: s[0], cz: s[1], f: s[2], a: s[2] < 0 ? Math.PI : 0 }; }
+const ORIGIN = { cx: 0, cz: 0, f: 1, a: 0 };
+// lokal (x,z) → dunia, dengan rotasi frame F.a
+function W2(F, x, z) { const c = Math.cos(F.a || 0), s = Math.sin(F.a || 0); return [F.cx + x * c + z * s, F.cz - x * s + z * c]; }
+function put(F, m, x, y, z, o) {
+  o = o || {};
+  const w = W2(F, x, z); m.position.set(w[0], y, w[1]);
+  m.rotation.set(o.rx || 0, (o.ry || 0) + (F.a || 0), o.rz || 0);
+  if (o.s) m.scale.set(o.s[0], o.s[1], o.s[2]);
+  m.castShadow = o.cast !== false; m.receiveShadow = true;
+  if (o.dyn || o.parent) (o.parent || scene).add(m); else statics.push(m);
+  return m;
+}
+function box(F, w, h, d, c, x, y, z, o) {
+  o = o || {};
+  const m = put(F, new T.Mesh(new T.BoxGeometry(w, h, d), typeof c === 'string' ? M(c) : c), x, y, z, o);
+  if (o.collide) {
+    const sw = Math.abs(Math.sin((o.ry || 0) + (F.a || 0))) > 0.7; const ww = sw ? d : w, dd = sw ? w : d;
+    const [wx, wz] = W2(F, x, z);
+    W.colliders.push({ x0: wx - ww / 2, x1: wx + ww / 2, z0: wz - dd / 2, z1: wz + dd / 2, top: y + h / 2 });
+  }
+  return m;
+}
+function cyl(F, rt, rb, h, seg, c, x, y, z, o) { return put(F, new T.Mesh(new T.CylinderGeometry(rt, rb, h, seg), M(c)), x, y, z, o); }
+function cone(F, r, h, seg, c, x, y, z, o) { return put(F, new T.Mesh(new T.ConeGeometry(r, h, seg), M(c)), x, y, z, o); }
+function sph(F, r, c, x, y, z, o) { return put(F, new T.Mesh(new T.SphereGeometry(r, 10, 8), M(c)), x, y, z, o); }
+function colRect(F, x, z, w, d, top) { const [wx, wz] = W2(F, x, z); if (Math.abs(Math.sin(F.a || 0)) > .7) { const t = w; w = d; d = t; } W.colliders.push({ x0: wx - w / 2, x1: wx + w / 2, z0: wz - d / 2, z1: wz + d / 2, top }); }
+// atap pelana: prisma segitiga memanjang sumbu x lokal, alas di yBase
+function gable(F, len, width, height, c, x, yBase, z) {
+  const g = new T.CylinderGeometry(1, 1, len, 3, 1); g.rotateZ(-Math.PI / 2); g.rotateX(-Math.PI / 2); g.translate(0, .5, 0);
+  return put(F, new T.Mesh(g, M(c)), x, yBase, z, { s: [1, height / 1.5, width / 1.732] });
+}
+function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 4; return t; }
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+W.canvasTex = canvasTex; W.rr = rr;
+function board(F, text, w, h, x, y, z, bg, fg, o) {
+  const px = 64; const tex = canvasTex(Math.round(w * px), Math.round(h * px), (c, cw, ch) => {
+    c.fillStyle = bg; c.fillRect(0, 0, cw, ch); c.fillStyle = fg; c.textAlign = 'center'; c.textBaseline = 'middle';
+    let fs = ch * 0.62; c.font = `800 ${fs}px Nunito, sans-serif`; while (c.measureText(text).width > cw * 0.92 && fs > 8) { fs -= 2; c.font = `800 ${fs}px Nunito, sans-serif`; }
+    c.fillText(text, cw / 2, ch / 2 + 2);
+  });
+  const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ map: tex }));
+  return put(F, m, x, y, z, Object.assign({ dyn: true, cast: false }, o || {}));
+}
+function car(F, x, z, ry, len, body, top, extra) {
+  const sw = Math.abs(Math.sin(ry)) > .7;
+  box(F, sw ? 2.4 : len, 1.3, sw ? len : 2.4, body, x, 1.05, z, { ry: 0, collide: false });
+  box(F, sw ? 2.2 : len * .55, 1.1, sw ? len * .55 : 2.2, top, x + (sw ? 0 : -len * .12), 2.25, z + (sw ? -len * .12 : 0));
+  const wx = [-len * .32, len * .32];
+  for (const a of wx) for (const b of [-1.2, 1.2]) cyl(F, .45, .45, .35, 12, '#1A1A1A', x + (sw ? b : a), .45, z + (sw ? a : b), { rx: sw ? 0 : Math.PI / 2, rz: sw ? Math.PI / 2 : 0, ry: 0 });
+  colRect(F, x, z, sw ? 2.4 : len, sw ? len : 2.4, 2.8);
+  if (extra) extra(sw);
+}
+function door(F, x, z, w, h, c) { box(F, w, h, .2, c || '#6B4A2B', x, h / 2, z, { cast: false }); }
+function windows(F, z, y, xs, w, h, c) { for (const x of xs) box(F, w, h, .2, c || '#8FD0F0', x, y, z, { cast: false }); }
+function steps(F, z, w, c) { box(F, w, .35, 2, c || '#DDE3EA', 0, .17, z, { collide: true, cast: false }); }
+
+// ---------- bangunan ----------
+const B = {};
+B[0] = F => { // Masjid
+  box(F, 14, 6, 10, '#F3EBD8', 0, 3, 0, { collide: true }); box(F, 15, .6, 11, '#1E9E57', 0, 6.3, 0);
+  put(F, new T.Mesh(new T.SphereGeometry(3.4, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), M('#22B35E')), 0, 6.6, 0);
+  box(F, .25, 1.4, .25, '#FFC83D', 0, 10.6, 0); sph(F, .35, '#FFC83D', 0, 11.4, 0);
+  cyl(F, .9, 1, 12, 10, '#FFFFFF', 8.4, 6, -3); colRect(F, 8.4, -3, 2, 2, 12);
+  box(F, 2.4, .6, 2.4, '#22B35E', 8.4, 9, -3); cone(F, 1.2, 2.4, 10, '#22B35E', 8.4, 13.2, -3);
+  windows(F, 5.05, 3.6, [-4.6, 4.6], 1.8, 2.6); door(F, 0, 5.05, 2.8, 3.8); steps(F, 6, 6, '#E2DCCB');
+};
+B[1] = F => { // Madrasah
+  box(F, 16, 7, 9, '#FFFFFF', 0, 3.5, 0, { collide: true }); box(F, 16.1, .45, 9.1, '#22B35E', 0, 3.6, 0); box(F, 16.6, .5, 9.6, '#22B35E', 0, 7.25, 0);
+  for (const y of [1.9, 5.4]) windows(F, 4.55, y, [-6, -3.2, 3.2, 6], 1.8, 1.6);
+  door(F, 0, 4.55, 2.4, 3); board(F, 'MADRASAH IBTIDAIYAH', 9, 1.1, 0, 5.4, 4.62, '#1E7B45', '#FFFFFF');
+  box(F, .18, 7, .18, '#D9D9D9', -7, 3.5, 7); box(F, 1.6, .5, .05, '#E3263B', -6.15, 6.6, 7); box(F, 1.6, .5, .05, '#FFFFFF', -6.15, 6.1, 7); colRect(F, -7, 7, .5, .5, 7);
+  steps(F, 5.5, 4);
+};
+B[2] = F => { // Perpustakaan
+  box(F, 14, 5.5, 9, '#E8D9C0', 0, 2.75, 0, { collide: true }); box(F, 14.6, .6, 9.6, '#8E4B17', 0, 5.8, 0);
+  for (const x of [-4.5, -1.5, 1.5, 4.5]) { cyl(F, .4, .45, 5.5, 10, '#FFFFFF', x, 2.75, 5.6); colRect(F, x, 5.6, .9, .9, 6); }
+  box(F, 11, .5, 3, '#FFFFFF', 0, 5.75, 5.5);
+  gable(F, 11, 3.2, 1.6, '#FFFFFF', 0, 6.0, 5.5);
+  box(F, 2.6, .25, 3.4, '#FFFFFF', -1.25, 7.4, 0, { rz: .35 }); box(F, 2.6, .25, 3.4, '#FFFFFF', 1.25, 7.4, 0, { rz: -.35 });
+  box(F, 2.7, .12, 3.5, '#2F7BFF', -1.25, 7.25, 0, { rz: .35 }); box(F, 2.7, .12, 3.5, '#2F7BFF', 1.25, 7.25, 0, { rz: -.35 });
+  door(F, 0, 4.55, 2.4, 3.2, '#3B2A1A'); windows(F, 4.55, 2.6, [-5.6, 5.6], 1.6, 2);
+  board(F, 'PERPUSTAKAAN', 6, .9, 0, 4.6, 7.05, '#8E4B17', '#FFFFFF'); steps(F, 7.3, 11, '#E6E0D2');
+};
+B[3] = F => { // Puskesmas
+  box(F, 14, 5.5, 10, '#FFFFFF', 0, 2.75, 0, { collide: true }); box(F, 15, .7, 11, '#E3263B', 0, 5.85, 0);
+  box(F, 3.2, 3.2, .4, '#FFFFFF', 0, 8, 3); box(F, .9, 2.4, .5, '#E3263B', 0, 8, 3.1, { cast: false }); box(F, 2.4, .9, .5, '#E3263B', 0, 8, 3.1, { cast: false });
+  windows(F, 5.05, 3.2, [-4.5, 4.5], 2.6, 1.8); box(F, 3, 3.4, .2, '#9ED3EE', 0, 1.7, 5.05, { cast: false });
+  board(F, 'PUSKESMAS', 6, .9, 0, 4.4, 5.12, '#E3263B', '#FFFFFF'); steps(F, 6, 5);
+  car(F, 9.5, 6.5, Math.PI / 2, 5, '#FFFFFF', '#FFFFFF', sw => { box(F, 1.6, .35, .4, '#E3263B', 9.5, 2.95, 6.5); });
+};
+B[4] = F => { // Pasar
+  box(F, 16, 4.2, .6, '#FFF1C9', 0, 2.1, -4.6, { collide: true }); box(F, 16.6, .5, 1.2, '#FF9F1C', 0, 4.4, -4.6);
+  const fruit = ['#E3263B', '#FFC83D', '#22B35E', '#FF9F1C'];
+  [-5.2, 0, 5.2].forEach((dx, i) => {
+    box(F, 4.2, 1.1, 2.2, '#C58B4A', dx, .55, -1, { collide: true });
+    for (const sx of [-2, 2]) box(F, .25, 3.4, .25, '#7A4416', dx + sx, 1.7, .4);
+    for (let s = 0; s < 4; s++) box(F, 1.1, .25, 3.2, s % 2 ? '#FFFFFF' : (i % 2 ? '#2F7BFF' : '#E3263B'), dx - 1.65 + s * 1.1, 3.5, -.8);
+    for (let k = 0; k < 5; k++) sph(F, .28, fruit[(k + i) % 4], dx - 1.5 + k * .75, 1.35, -.7);
+  });
+  for (const x of [-8.5, 8.5]) box(F, .5, 5.5, .5, '#7A4416', x, 2.75, 3, { collide: true });
+  box(F, 17.5, .5, .6, '#7A4416', 0, 5.6, 3); board(F, 'PASAR RAKYAT', 6, 1, 0, 5.6, 3.32, '#FF9F1C', '#FFFFFF');
+};
+B[5] = F => { // Balai Desa (pendopo)
+  box(F, 15, .6, 11, '#A86A3D', 0, .3, 0, { collide: true });
+  for (const dx of [-6.5, -2.2, 2.2, 6.5]) for (const dz of [-4.5, 4.5]) box(F, .7, 5.4, .7, '#7A4416', dx, 3.3, dz, { collide: true });
+  cone(F, 11, 4.2, 4, '#8E4B17', 0, 8.1, 0, { ry: Math.PI / 4, s: [1, 1, .78] }); cone(F, 4.2, 2.6, 4, '#B5651D', 0, 10.6, 0, { ry: Math.PI / 4 });
+  box(F, 8, .3, 2.2, '#D9A066', 0, 1.5, 0, { collide: true }); for (const dx of [-3.6, 3.6]) box(F, .3, .9, 1.8, '#7A4416', dx, 1, 0);
+  for (const dz of [-2.4, 2.4]) box(F, 7, .35, 1, '#C58B4A', 0, 1.05, dz, { collide: true });
+  box(F, .3, 2.2, .3, '#7A4416', -3, 1.1, 7.2); board(F, 'BALAI DESA', 3.4, .8, -3, 2.4, 7.4, '#7A4416', '#FFFFFF');
+};
+B[6] = F => { // Rumah Adat Bugis (rumah panggung)
+  for (const dx of [-5, -1.7, 1.7, 5]) for (const dz of [-3.2, 0, 3.2]) box(F, .45, 2.6, .45, '#6B3E1E', dx, 1.3, dz, { collide: true });
+  box(F, 12, .4, 8, '#8B5A2B', 0, 2.8, 0); colRect(F, 0, 0, 12, 8, 3.0);
+  box(F, 11, 3.2, 7, '#A0522D', 0, 4.6, 0, { collide: true });
+  gable(F, 13, 9, 4.4, '#5A3215', 0, 6.2, 0);
+  for (const sx of [-1, 1]) { box(F, .25, 3, .3, '#5A3215', sx * 6.5, 10.6, 0, { rx: .55 }); box(F, .25, 3, .3, '#5A3215', sx * 6.5, 10.6, 0, { rx: -.55 }); }
+  door(F, 0, 3.55, 1.6, 2.4, '#4A2A12'); box(F, 1.6, 2.4, .2, '#4A2A12', 0, 4.2, 3.55, { cast: false });
+  windows(F, 3.55, 4.6, [-3.6, 3.6], 1.4, 1.2, '#3B2A1A');
+  for (let k = 1; k <= 5; k++) { const top = .52 * k; box(F, 2.2, top, .62, '#8B5A2B', 0, top / 2, 4.2 + (5 - k) * .6, { collide: true }); }
+  board(F, 'RUMAH ADAT BUGIS', 5, .8, 0, 1.2, 7.6, '#5A3215', '#FFFFFF');
+};
+B[7] = F => { // Kantor Pos
+  box(F, 13, 5, 9, '#FF8C1A', 0, 2.5, 0, { collide: true }); box(F, 13.6, .6, 9.6, '#C25E00', 0, 5.3, 0); box(F, 13.05, .5, 9.05, '#FFFFFF', 0, 3.9, 0);
+  windows(F, 4.55, 2.2, [-4.4, 4.4], 2.2, 1.8); door(F, 0, 4.55, 2.4, 3, '#9ED3EE');
+  board(F, 'KANTOR POS', 5.6, .9, 0, 4.5, 4.62, '#FFFFFF', '#C25E00');
+  box(F, .9, 1.4, .9, '#FF8C1A', 5.5, .7, 6.5, { collide: true }); box(F, 1, .2, 1, '#C25E00', 5.5, 1.5, 6.5); box(F, .6, .08, .05, '#1A1A1A', 5.5, 1.1, 6.98, { cast: false });
+  box(F, 1, .8, .8, '#C58B4A', -5.5, .4, 6.3); box(F, .8, .6, .7, '#D9A066', -5.3, 1.1, 6.3); steps(F, 5.6, 4);
+};
+B[8] = F => { // Pemadam Kebakaran
+  box(F, 15, 6.5, 10, '#D62828', 0, 3.25, 0, { collide: true }); box(F, 15.6, .6, 10.6, '#8E1414', 0, 6.8, 0);
+  for (const x of [-3.6, 3.6]) box(F, 5.4, 4.6, .2, '#E9E9E9', x, 2.3, 5.05, { cast: false });
+  box(F, 3, 11, 3, '#B71C1C', -6, 5.5, -3.5, { collide: true }); box(F, 3.6, .6, 3.6, '#8E1414', -6, 11.2, -3.5);
+  board(F, 'PEMADAM KEBAKARAN', 9, .9, 0, 5.6, 5.12, '#FFFFFF', '#D62828');
+  car(F, -6.4, 7.6, 0, 7.5, '#E3263B', '#E3263B', () => { box(F, 6, .2, .5, '#C0C0C0', -6.4, 3, 7.3); box(F, 6, .2, .5, '#C0C0C0', -6.4, 3, 7.9); });
+};
+B[9] = F => { // Kantor Polisi
+  box(F, 14, 5.5, 9, '#E8EDF3', 0, 2.75, 0, { collide: true }); box(F, 14.1, 1.4, 9.1, '#2F4E8C', 0, 4.8, 0); box(F, 14.6, .6, 9.6, '#1F3460', 0, 5.8, 0);
+  windows(F, 4.55, 2.4, [-4.6, -2.2, 2.2, 4.6], 1.6, 1.6); door(F, 0, 4.55, 2.4, 3, '#2F4E8C');
+  board(F, 'KANTOR POLISI', 6, .9, 0, 4.8, 4.62, '#2F4E8C', '#FFFFFF');
+  car(F, 6.4, 7.4, 0, 5, '#FFFFFF', '#2F4E8C', () => {
+    const r = box(F, .7, .3, .6, new T.MeshBasicMaterial({ color: '#FF2D2D' }), 5.95, 2.95, 7.4, { dyn: true }), b = box(F, .7, .3, .6, new T.MeshBasicMaterial({ color: '#2D6BFF' }), 6.85, 2.95, 7.4, { dyn: true });
+    W.dyn.push(t => { const on = Math.floor(t * 3) % 2; r.material.color.set(on ? '#FF2D2D' : '#661111'); b.material.color.set(on ? '#112266' : '#2D6BFF'); });
+  });
+  steps(F, 5.6, 4);
+};
+B[10] = F => { // Toko Kelontong
+  box(F, 10, 4.2, 8, '#FFE08A', 0, 2.1, 0, { collide: true }); box(F, 10.6, .5, 8.6, '#C58B4A', 0, 4.45, 0);
+  for (let s = 0; s < 6; s++) box(F, 1.75, .2, 2.6, s % 2 ? '#FFFFFF' : '#22B35E', -4.4 + s * 1.75, 3.5, 5.1, { rx: .25 });
+  board(F, 'TOKO KELONTONG', 6, .8, 0, 4.1, 4.08, '#22B35E', '#FFFFFF');
+  box(F, 6, 1, 1, '#C58B4A', 0, .5, 4.6, { collide: true }); for (let k = 0; k < 6; k++) box(F, .5, .6, .5, ['#E3263B', '#2F7BFF', '#FFC83D'][k % 3], -2.5 + k, 1.3, 4.6);
+  box(F, 1.2, 2.2, 1, '#E3263B', 4.2, 1.1, 5.2, { collide: true }); board(F, 'ES', .8, .5, 4.2, 1.7, 5.72, '#FFFFFF', '#E3263B');
+  for (const x of [-4, -3.2]) box(F, .8, .8, .8, '#C58B4A', x, .4, 5.6);
+};
+B[11] = F => { // Rumah Warga
+  [[-5.6, '#E3263B', '#FFF3D6'], [0, '#2F7BFF', '#E9F5FF'], [5.6, '#22B35E', '#FFF8E1']].forEach(([x, roof, wall]) => {
+    box(F, 4.4, 3, 4.8, wall, x, 1.5, 0, { collide: true }); gable(F, 5, 5.6, 2.2, roof, x, 3, 0);
+    door(F, x, 2.45, 1.1, 2, '#7A4416'); windows(F, 2.45, 1.8, [x - 1.4, x + 1.4], .8, .8);
+    box(F, .2, .7, 2.2, '#FFFFFF', x - 2.2, .35, 3.6, { collide: true }); box(F, .2, .7, 2.2, '#FFFFFF', x + 2.2, .35, 3.6, { collide: true });
+    sph(F, .45, '#2F8A3E', x - 1.6, .5, 3.2); sph(F, .45, '#2F8A3E', x + 1.6, .5, 3.2);
+  });
+  board(F, 'RUMAH WARGA', 4, .7, 0, 3.4, 2.47, '#3B2A1A', '#FFFFFF');
+};
+B[12] = F => { // Dermaga
+  box(F, 6, 3.5, 5, '#C9A26B', 0, 1.75, 0, { collide: true }); gable(F, 6.6, 6, 2, '#2F7BFF', 0, 3.5, 0);
+  board(F, 'DERMAGA', 4, .8, 0, 2.8, 2.55, '#2F7BFF', '#FFFFFF'); door(F, 0, 2.55, 1.2, 2.2, '#7A4416');
+  box(F, 3.4, .3, 20, '#9C6B3C', 0, .45, -12.5, { cast: false }); colRect(F, 0, -12.5, 3.4, 20, .6);
+  for (let z = -4; z >= -22; z -= 3) for (const x of [-1.6, 1.6]) box(F, .3, 2.2, .3, '#6B4A2B', x, -.3, z);
+  cyl(F, 1, 1.3, 10, 12, '#FFFFFF', -7, 5, -5); colRect(F, -7, -5, 2.4, 2.4, 10);
+  for (const y of [2, 5, 8]) cyl(F, 1.05, 1.15, 1, 12, '#E3263B', -7, y, -5, { cast: false });
+  cyl(F, .8, .8, 1.2, 10, '#FFE08A', -7, 10.6, -5); cone(F, 1.1, 1.2, 10, '#E3263B', -7, 11.8, -5);
+  const boat = new T.Group();
+  const hull = new T.Mesh(new T.BoxGeometry(2.4, 1, 6), M('#E3263B')); hull.position.y = .3; hull.castShadow = true; boat.add(hull);
+  const hull2 = new T.Mesh(new T.BoxGeometry(2.6, .3, 6.2), M('#FFFFFF')); hull2.position.y = .85; boat.add(hull2);
+  const bow = new T.Mesh(new T.ConeGeometry(1.2, 2, 4), M('#E3263B')); bow.rotation.x = Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, .3, 3.8); bow.scale.set(1, 1, .5); boat.add(bow);
+  const mast = new T.Mesh(new T.CylinderGeometry(.1, .1, 4.5, 6), M('#6B4A2B')); mast.position.y = 3; boat.add(mast);
+  const sail = new T.Mesh(new T.PlaneGeometry(2.6, 3), new T.MeshLambertMaterial({ color: '#FFF6E5', side: T.DoubleSide })); sail.position.set(0, 3.4, -.2); sail.rotation.y = Math.PI / 2; boat.add(sail);
+  const bp = [F.cx + F.f * 4.6, F.cz + F.f * -17]; boat.position.set(bp[0], 0, bp[1]); scene.add(boat);
+  W.dyn.push(t => { boat.position.y = Math.sin(t * 1.4) * .18 - .1; boat.rotation.z = Math.sin(t * 1.1) * .05; boat.rotation.x = Math.sin(t * .9) * .03; });
+};
+B[13] = F => { // Sawah & Lumbung
+  const paddy = canvasTex(32, 32, c => { c.fillStyle = '#8BD15A'; c.fillRect(0, 0, 32, 32); c.fillStyle = '#6FB845'; for (let i = 0; i < 32; i += 8) c.fillRect(i, 0, 4, 32); });
+  paddy.wrapS = paddy.wrapT = T.RepeatWrapping; paddy.repeat.set(5, 3);
+  const pm = new T.MeshLambertMaterial({ map: paddy });
+  for (const [x, z] of [[-4.2, -1.5], [4.2, -1.5], [-4.2, 4.5], [4.2, 4.5]]) {
+    const p = new T.Mesh(new T.PlaneGeometry(7.6, 5), pm); p.rotation.x = -Math.PI / 2; p.position.set(F.cx + F.f * x, .06, F.cz + F.f * z); p.receiveShadow = true; scene.add(p);
+    box(F, 8, .3, .35, '#8B6B3E', x, .15, z + 2.7, { cast: false });
+  }
+  for (const dx of [-1.4, 1.4]) for (const dz of [-1.4, 1.4]) box(F, .35, 2, .35, '#6B3E1E', -9.5 + dx, 1, -4 + dz, { collide: true });
+  box(F, 3.6, 2.4, 3.6, '#C58B4A', -9.5, 3.2, -4, { collide: true }); cone(F, 3.4, 2.4, 4, '#8E4B17', -9.5, 5.6, -4, { ry: Math.PI / 4 });
+  box(F, .2, 3, .2, '#7A4416', 9.4, 1.5, 1.5); box(F, 2.4, .2, .2, '#7A4416', 9.4, 2.3, 1.5); sph(F, .4, '#F2C29A', 9.4, 3.2, 1.5); cone(F, .7, .5, 8, '#E9C46A', 9.4, 3.6, 1.5);
+  box(F, .9, 1, .5, '#E3263B', 9.4, 2.1, 1.5); colRect(F, 9.4, 1.5, .5, .5, 3);
+  box(F, .25, 1.6, .25, '#7A4416', 0, .8, 8.2); board(F, 'SAWAH & LUMBUNG', 4.4, .8, 0, 1.9, 8.36, '#6FB845', '#FFFFFF');
+};
+B[14] = F => { // Lapangan Merah Putih + podium
+  box(F, 22, .18, 18, '#D8C79C', 0, .09, 0, { collide: true, cast: false });
+  for (const [w, d, x, z] of [[21, .3, 0, -8.6], [21, .3, 0, 8.6], [.3, 17, -10.4, 0], [.3, 17, 10.4, 0]]) box(F, w, .02, d, '#FFFFFF', x, .19, z, { cast: false });
+  // podium di sisi belakang (z lokal negatif = jauh dari jalan)
+  const pd = [[0, 2.4, '#FFC83D'], [-3.6, 1.6, '#C9D2DC'], [3.6, 1.0, '#D08A4A']];
+  pd.forEach(([x, h, c], i) => { box(F, 3.4, h, 3, c, x, h / 2, -4.6, { collide: true }); board(F, String(i + 1), 1, 1, x, h * .5, -3.09, c, '#13202F'); W.podium[i] = { x: F.cx + F.f * x, z: F.cz + F.f * -4.6, top: h }; });
+  box(F, 11.6, .3, 4.4, '#7A2E2E', 0, .3, -4.6, { cast: false });
+  box(F, 3, .8, 3, '#EDEDED', 0, .4, -7.5, { collide: true });
+  cyl(F, .12, .15, 12, 8, '#D9D9D9', 0, 6.8, -7.5); colRect(F, 0, -7.5, .6, .6, 13);
+  const ft = canvasTex(64, 40, c => { c.fillStyle = '#E3263B'; c.fillRect(0, 0, 64, 20); c.fillStyle = '#FFFFFF'; c.fillRect(0, 20, 64, 20); });
+  const fg = new T.PlaneGeometry(4.2, 2.8, 16, 6); fg.translate(2.1, 0, 0);
+  const flag = new T.Mesh(fg, new T.MeshLambertMaterial({ map: ft, side: T.DoubleSide })); flag.position.set(F.cx + .1, 11.4, F.cz + F.f * -7.5); flag.castShadow = true; scene.add(flag);
+  const base = Float32Array.from(fg.attributes.position.array);
+  W.dyn.push(t => { const p = fg.attributes.position; for (let i = 0; i < p.count; i++) { const x = base[i * 3]; p.array[i * 3 + 2] = Math.sin(x * 1.6 - t * 5) * .28 * (x / 4.2); } p.needsUpdate = true; fg.computeVertexNormals(); });
+  for (const x of [-8, 8]) { box(F, 3.2, .5, 1, '#8B5A2B', x, .65, 5, { collide: true }); }
+  W.podiumCenter = { x: F.cx, z: F.cz + F.f * -4.6, face: F.f };   // arah hadap podium (ke jalan)
+};
+B[15] = F => { // Taman Bermain
+  const grass2 = '#6FC25A'; box(F, 18, .12, 13, grass2, 0, .06, 0, { cast: false });
+  for (const x of [-7, -3]) { box(F, .25, 4.4, .25, '#E3263B', x, 2.1, -2, { rx: .25 }); box(F, .25, 4.4, .25, '#E3263B', x, 2.1, -4, { rx: -.25 }); colRect(F, x, -3, .6, 3, 4); }
+  box(F, 4.6, .25, .25, '#E3263B', -5, 4.25, -3);
+  const seats = [];
+  for (const x of [-6, -4]) {
+    const g = new T.Group(); const ropeM = M('#555555');
+    for (const sx of [-.35, .35]) { const r = new T.Mesh(new T.BoxGeometry(.05, 3, .05), ropeM); r.position.set(sx, -1.5, 0); g.add(r); }
+    const s = new T.Mesh(new T.BoxGeometry(.9, .12, .5), M('#2F7BFF')); s.position.y = -3; s.castShadow = true; g.add(s);
+    g.position.set(F.cx + F.f * x, 4.2, F.cz + F.f * -3); scene.add(g); seats.push(g);
+  }
+  W.dyn.push(t => seats.forEach((g, i) => g.rotation.x = Math.sin(t * 2 + i * 1.7) * .35));
+  box(F, 2, .3, 2, '#FFC83D', 4, 2.6, -3, { collide: true }); for (const dx of [-.9, .9]) for (const dz of [-.9, .9]) box(F, .2, 2.6, .2, '#FFC83D', 4 + dx, 1.3, -3 + dz);
+  box(F, 1.6, .2, 5, '#22B35E', 4, 1.4, .3, { rx: -.5 });
+  for (let k = 0; k < 4; k++) box(F, 1.2, .15, .15, '#FFC83D', 4, .5 + k * .6, -4.3);
+  box(F, .4, .6, .4, '#7A4416', -1, .3, 3); box(F, 4, .15, .5, '#FF9F1C', -1, .65, 3, { rz: .15 });
+  box(F, 3.4, .35, 3.4, '#E9D8A6', 6, .17, 3.5, { cast: false });
+  const fl = ['#FF5FA2', '#FFC83D', '#FFFFFF', '#9B51E0'];
+  for (let k = 0; k < 18; k++) sph(F, .22, fl[k % 4], -8 + (k % 9) * 2, .3, 5.6 + Math.floor(k / 9) * .7, { cast: false });
+  box(F, .25, 1.6, .25, '#7A4416', -8.6, .8, 6.4); board(F, 'TAMAN BERMAIN', 4, .7, -8.6, 1.9, 6.55, '#9B51E0', '#FFFFFF');
+};
+
+
+// ---------- bangunan pajangan (tanpa soal) ----------
+const SIGNS = ['WARUNG MAKAN', 'APOTEK', 'BENGKEL', 'KAFE', 'BAKSO', 'LAUNDRY', 'FOTOKOPI', 'TOKO BUKU', 'TOKO BAJU', 'BANK', 'SALON', 'KUE & ROTI', 'TOKO HP', 'SATE', 'ES TEH', 'MINIMARKET', 'BUAH SEGAR', 'PENJAHIT', 'KONTER PULSA', 'MIE AYAM', 'TOKO BANGUNAN', 'COTO MAKASSAR', 'PISANG EPE', 'MEBEL'];
+const WALLS = ['#FFF3D6', '#FDE2E4', '#E2F0CB', '#D6EAF8', '#FFE0B2', '#F5F5F5', '#E8DAEF', '#FCF3CF', '#D5F5E3', '#FADBD8'];
+const ROOFS = ['#C0392B', '#2E86C1', '#1E8449', '#7D3C98', '#B9770E', '#566573', '#A04000', '#117A65'];
+const BRIGHT = ['#E3263B', '#2F7BFF', '#22B35E', '#FF9F1C', '#9B51E0', '#13B5B5', '#FF5FA2'];
+W.decorRects = [];
+function decorBuilding(F, w, d, kind, R) {
+  const pick = a => a[Math.floor(R() * a.length)];
+  const wall = pick(WALLS), roof = pick(ROOFS), acc = pick(BRIGHT);
+  if (kind === 'rumah') {
+    const h = 3 + R() * .6; box(F, w, h, d, wall, 0, h / 2, 0, { collide: true }); gable(F, w + .6, d + .9, 1.6 + R() * .8, roof, 0, h, 0);
+    door(F, w * .18, d / 2 + .05, 1, 2, '#7A4416'); windows(F, d / 2 + .05, h * .55, [-w * .25], 1.1, .9);
+    if (R() < .5) { box(F, w, .6, .15, '#FFFFFF', 0, .3, d / 2 + 1.2, { collide: true }); }
+  } else if (kind === 'ruko') {
+    const fl = R() < .5 ? 2 : 3, h = fl * 3.1; box(F, w, h, d, wall, 0, h / 2, 0, { collide: true }); box(F, w + .4, .4, d + .4, roof, 0, h + .2, 0);
+    for (let f = 1; f < fl; f++) windows(F, d / 2 + .05, f * 3.1 + 1.5, [-w * .28, 0, w * .28], 1.2, 1.2, '#9ED3EE');
+    box(F, w * .8, 2.3, .15, '#8FA9BF', 0, 1.2, d / 2 + .05, { cast: false });
+    for (let k = 0; k < 4; k++) box(F, w / 4, .2, 1.6, k % 2 ? '#FFFFFF' : acc, -w * .375 + k * w / 4, 2.75, d / 2 + .7, { rx: .3 });
+    if (W._signs < SIGNS.length && R() < .85) board(F, SIGNS[W._signs++], w * .8, .8, 0, 3.55, d / 2 + .12, acc, '#FFFFFF');
+    else box(F, w * .8, .8, .1, acc, 0, 3.55, d / 2 + .1, { cast: false });
+  } else if (kind === 'gedung') {
+    const fl = 3 + Math.floor(R() * 3), h = fl * 3; box(F, w, h, d, pick(['#D6DBDF', '#EAECEE', '#F5CBA7', '#D4E6F1', '#E8DAEF']), 0, h / 2, 0, { collide: true });
+    box(F, w + .3, .4, d + .3, '#5D6D7E', 0, h + .2, 0);
+    const cols = Math.max(2, Math.floor(w / 2.4)); const xs = []; for (let c = 0; c < cols; c++) xs.push(-w / 2 + (c + .5) * w / cols);
+    for (let f = 0; f < fl; f++) windows(F, d / 2 + .05, f * 3 + 1.7, xs, 1.1, 1.3, f === 0 ? '#8FA9BF' : '#5DADE2');
+    if (R() < .6) { cyl(F, .9, .9, 1.4, 10, '#85929E', w * .25, h + 1.1, 0); }
+    door(F, 0, d / 2 + .06, 1.6, 2.2, '#2C3E50');
+  } else { // warung
+    const h = 2.8; box(F, w, h, d, wall, 0, h / 2, 0, { collide: true }); box(F, w + 1, .25, d + 2.2, roof, 0, h + .15, .8, { rx: -.08 });
+    box(F, w * .8, 1, .9, '#C58B4A', 0, .5, d / 2 + .6, { collide: true });
+    for (let k = 0; k < 4; k++) sph(F, .22, pick(BRIGHT), -w * .3 + k * w * .2, 1.2, d / 2 + .6, { cast: false });
+    for (const sx of [-1, 1]) box(F, .2, h, .2, '#7A4416', sx * (w / 2 + .3), h / 2, d / 2 + 1.7);
+  }
+}
+function buildDecor() {
+  const R = seeded(77); W._signs = 0;
+  const ex = [];  // area terlarang
+  for (const id in SLOT) {
+    const [sx, sz, f] = SLOT[id]; const big = id == 14 || id == 15 || id == 13 ? 2.5 : 0;
+    ex.push([sx - 10.5 - big, sx + 10.5 + big, sz - 7 - big, sz + 7 + big]);
+    const spz = sz + f * 10; ex.push([sx - 6.5, sx + 6.5, spz - 6, spz + 6]);
+    const road = [-40, 0, 40].reduce((a, b) => Math.abs(b - spz) < Math.abs(a - spz) ? b : a); ex.push([sx - 4.5, sx + 4.5, Math.min(spz, road), Math.max(spz, road)]);
+  }
+  ex.push([-18, 18, -90, -63]);                  // menara bintang
+  ex.push([72, 100, 52, 90]);                     // dermaga & mercusuar
+  ex.push([-40, -20, 2, 12]);                     // titik awal
+  const roadsH = [-40, 0, 40], roadsV = [-60, 0, 60];
+  const hit = (a, b) => a[0] < b[1] && a[1] > b[0] && a[2] < b[3] && a[3] > b[2];
+  const free = r => r[0] > -102 && r[1] < 102 && r[2] > -84 && r[3] < 58 &&
+    !roadsH.some(z => r[2] < z + 4.4 && r[3] > z - 4.4 && r[1] > -103 && r[0] < 103) && !roadsV.some(x => r[0] < x + 4.4 && r[1] > x - 4.4 && r[3] > -67 && r[2] < 65) &&
+    !ex.some(e => hit(r, e)) && !W.decorRects.some(e => hit(r, e));
+  const kinds = R => { const v = R(); return v < .25 ? 'rumah' : v < .62 ? 'ruko' : v < .82 ? 'gedung' : 'warung'; };
+  const tryPlace = (cx, cz, a, w, d, kind) => {
+    const sw = Math.abs(Math.sin(a)) > .7; const hw = (sw ? d : w) / 2 + .6, hd = (sw ? w : d) / 2 + .6;
+    const r = [cx - hw, cx + hw, cz - hd, cz + hd]; if (!free(r)) return false;
+    W.decorRects.push(r); decorBuilding({ cx, cz, f: 1, a }, w, d, kind, R); return true;
+  };
+  for (const layer of [0, 1]) {
+    for (const rz of roadsH) for (const s of [-1, 1]) {
+      let x = -100;
+      while (x < 100) { const w = 6.5 + R() * 4, d = 6 + R() * 3; const off = 3.5 + 1.8 + d / 2 + (layer ? 10.5 : 0);
+        const kind = layer ? (R() < .55 ? 'gedung' : 'rumah') : kinds(R);
+        if (tryPlace(x + w / 2, rz + s * off, s > 0 ? Math.PI : 0, w, d, kind)) x += w + 1.2 + R() * 1.5; else x += 2; }
+    }
+    for (const rx of roadsV) for (const s of [-1, 1]) {
+      let z = -66;
+      while (z < 64) { const w = 6.5 + R() * 4, d = 6 + R() * 3; const off = 3.5 + 1.8 + d / 2 + (layer ? 10.5 : 0);
+        const kind = layer ? (R() < .55 ? 'gedung' : 'rumah') : kinds(R);
+        if (tryPlace(rx + s * off, z + w / 2, -s * Math.PI / 2, w, d, kind)) z += w + 1.2 + R() * 1.5; else z += 2; }
+    }
+  }
+  // isi sela-sela blok dengan rumah warga agar kampung terasa padat
+  for (let x = -98; x <= 98; x += 4) for (let z = -82; z <= 54; z += 4) {
+    if (W.decorRects.length >= 150) break; if (R() < .3) continue;
+    const w = 5.5 + R() * 2.5, d = 5.5 + R() * 1.5; const v = R(); const kind = v < .6 ? 'rumah' : v < .85 ? 'gedung' : 'warung';
+    const dh = Math.min(...roadsH.map(r => Math.abs(z - r))), dv = Math.min(...roadsV.map(r => Math.abs(x - r)));
+    let a; if (dh <= dv) { const r = roadsH.reduce((p, q) => Math.abs(q - z) < Math.abs(p - z) ? q : p); a = z > r ? Math.PI : 0; } else { const r = roadsV.reduce((p, q) => Math.abs(q - x) < Math.abs(p - x) ? q : p); a = x > r ? -Math.PI / 2 : Math.PI / 2; }
+    tryPlace(x + (R() - .5) * 2, z + (R() - .5) * 2, a, w, d, kind);
+  }
+}
+
+// ---------- jalan, lingkungan ----------
+function flat(w, d, c, x, z, y, mat) { const m = new T.Mesh(new T.PlaneGeometry(w, d), mat || M(c)); m.rotation.x = -Math.PI / 2; m.position.set(x, y || .02, z); m.receiveShadow = true; scene.add(m); return m; }
+function seeded(s) { return () => (s = (s * 16807) % 2147483647, (s - 1) / 2147483646); }
+
+W.build = function (sc, opts) {
+  scene = sc; opts = opts || {};
+  const grass = canvasTex(64, 64, c => { c.fillStyle = '#7CC864'; c.fillRect(0, 0, 64, 64); c.fillStyle = '#74BF5C'; c.fillRect(0, 0, 32, 32); c.fillRect(32, 32, 32, 32); });
+  grass.wrapS = grass.wrapT = T.RepeatWrapping; grass.repeat.set(55, 38); grass.magFilter = T.NearestFilter;
+  flat(220, 154, null, 0, -15, 0, new T.MeshLambertMaterial({ map: grass }));
+  flat(800, 800, '#5E9E4E', 0, -300, -.3);
+  flat(800, 800, '#5E9E4E', -500, 0, -.3); flat(800, 800, '#5E9E4E', 500, 0, -.3);
+  flat(240, 12, '#EED9A4', 0, 66, .015);
+  const wt = canvasTex(64, 64, c => { c.fillStyle = '#2E9BD6'; c.fillRect(0, 0, 64, 64); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; for (let y = 8; y < 64; y += 16) { c.beginPath(); c.moveTo(0, y); c.quadraticCurveTo(16, y - 5, 32, y); c.quadraticCurveTo(48, y + 5, 64, y); c.stroke(); } });
+  wt.wrapS = wt.wrapT = T.RepeatWrapping; wt.repeat.set(60, 30);
+  const sea = flat(800, 400, null, 0, 271, -.15, new T.MeshLambertMaterial({ map: wt, emissive: '#0A3550' }));
+  W.dyn.push(t => { wt.offset.set(t * .01, t * .02); });
+  // jalan
+  const asphalt = M('#4A4F58');
+  for (const z of [-40, 0, 40]) flat(204, 7, null, 0, z, .03, asphalt);
+  for (const x of [-60, 0, 60]) flat(7, 132, null, x, -1, .031, asphalt);
+  const dash = M('#F4F4F4');
+  for (const z of [-40, 0, 40]) for (let x = -98; x <= 98; x += 5) if ([-60, 0, 60].every(v => Math.abs(x - v) > 5)) { const d = new T.Mesh(new T.PlaneGeometry(2.2, .3), dash); d.rotation.x = -Math.PI / 2; d.position.set(x, .045, z); statics.push(d); }
+  for (const x of [-60, 0, 60]) for (let z = -64; z <= 62; z += 5) if ([-40, 0, 40].every(v => Math.abs(z - v) > 5)) { const d = new T.Mesh(new T.PlaneGeometry(.3, 2.2), dash); d.rotation.x = -Math.PI / 2; d.position.set(x, .046, z); statics.push(d); }
+  // pagar tanaman tepi peta
+  box(ORIGIN, 216, 1.2, 1.2, '#3E8E3A', 0, .6, -88, { collide: true });
+  box(ORIGIN, 1.2, 1.2, 152, '#3E8E3A', -106, .6, -13, { collide: true }); box(ORIGIN, 1.2, 1.2, 152, '#3E8E3A', 106, .6, -13, { collide: true });
+  // bangunan
+  for (const id in SLOT) B[id](frame(+id));
+  buildDecor();
+  // obby Menara Bintang (utara tengah)
+  const ob = [[-7, .9, -72], [-4, 1.9, -75], [0, 2.9, -76.5], [4, 3.9, -75], [7, 4.9, -72], [10, 5.9, -75], [7, 6.9, -78], [3, 7.9, -80]];
+  const rb = ['#E3263B', '#FF9F1C', '#F4D03F', '#22B35E', '#13B5B5', '#2F7BFF', '#9B51E0', '#FF5FA2'];
+  ob.forEach(([x, y, z], i) => { const s = i === ob.length - 1 ? 4.4 : 2.8; box(ORIGIN, s, .6, s, rb[i], x, y, z, { collide: true }); box(ORIGIN, .35, y - .3, .35, '#B7C0CC', x, (y - .3) / 2, z, { cast: false }); });
+  const star = new T.Mesh(new T.OctahedronGeometry(1.1, 0), new T.MeshLambertMaterial({ color: '#FFC83D', emissive: '#7A5A00' }));
+  star.position.set(3, 10, -80); star.castShadow = true; scene.add(star); W.star = star; W.starBase = 10;
+  // pohon
+  const R = seeded(11); let n = 0, guard = 0;
+  const blocked = (x, z) => [-40, 0, 40].some(v => Math.abs(z - v) < 6.5) || [-60, 0, 60].some(v => Math.abs(x - v) < 6.5) ||
+    Object.keys(SLOT).some(id => { const s = SLOT[id]; return Math.abs(x - s[0]) < 13 && Math.abs(z - s[1]) < 10 || Math.hypot(x - s[0], z - (s[1] + s[2] * 10)) < 5; }) ||
+    W.decorRects.some(r => x > r[0] - 2.5 && x < r[1] + 2.5 && z > r[2] - 2.5 && z < r[3] + 2.5) ||
+    (Math.abs(x) < 17 && z < -66) || z > 60 || (x > 70 && z > 40);
+  while (n < 75 && guard++ < 6000) {
+    const x = -102 + R() * 204, z = -85 + R() * 145; if (blocked(x, z)) continue; n++;
+    const tall = R() < .4, h = tall ? 6 + R() * 2 : 3 + R() * 1.5;
+    box(ORIGIN, .7, h * .5, .7, '#7A4E2B', x, h * .25, z); W.colliders.push({ x0: x - .4, x1: x + .4, z0: z - .4, z1: z + .4, top: 9 });
+    if (tall) for (let k = 0; k < 3; k++) cone(ORIGIN, 2.4 - k * .6, 2.6, 7, k % 2 ? '#2F8A3E' : '#3BA34D', x, h * .45 + k * 1.4, z);
+    else put(ORIGIN, new T.Mesh(new T.DodecahedronGeometry(1.9 + R() * .8, 0), M(R() < .5 ? '#3BA34D' : '#2F8A3E')), x, h * .5 + 1.4, z);
+  }
+  // pohon kelapa di pantai
+  for (let x = -96; x <= 96; x += 16) { if (Math.abs(x - 85) < 10) continue; const z = 64 + (x % 3); box(ORIGIN, .5, 6, .5, '#8B6B3E', x, 3, z, { rz: .12 }); W.colliders.push({ x0: x - .35, x1: x + .35, z0: z - .35, z1: z + .35, top: 9 }); for (let k = 0; k < 5; k++) box(ORIGIN, .4, .15, 3, '#2F8A3E', x + .4 + Math.sin(k * 1.256) * 1.2, 6, z + Math.cos(k * 1.256) * 1.2, { ry: k * 1.256, rx: .35 }); }
+  // lampu jalan
+  for (const zr of [-40, 0, 40]) for (let x = -95; x <= 95; x += 26) { if ([-60, 0, 60].some(v => Math.abs(x - v) < 8)) continue; box(ORIGIN, .25, 5, .25, '#3A3F48', x, 2.5, zr - 4.4, { collide: true }); box(ORIGIN, 1.4, .3, .5, '#3A3F48', x, 5, zr - 4); box(ORIGIN, .8, .15, .4, '#FFF2B0', x, 4.83, zr - 3.9, { cast: false }); }
+  // awan
+  const CR = seeded(3);
+  for (let i = 0; i < 14; i++) { const g = new T.Group(); for (let k = 0; k < 4; k++) { const m = new T.Mesh(new T.BoxGeometry(6 + CR() * 6, 2 + CR() * 2, 4 + CR() * 4), M('#FFFFFF')); m.position.set(k * 3.6 - 5, CR() * 1.2, CR() * 3 - 1.5); g.add(m); } g.position.set(-200 + CR() * 400, 38 + CR() * 12, -160 + CR() * 260); scene.add(g); W.clouds.push(g); }
+  mergeStatics();
+};
+
+// gabungkan mesh statis per material → sedikit draw call (ringan di HP)
+function mergeStatics() {
+  const buckets = new Map();
+  for (const m of statics) {
+    m.updateMatrixWorld(true);
+    let g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+    g.applyMatrix4(m.matrixWorld);
+    const key = m.material.uuid; if (!buckets.has(key)) buckets.set(key, { mat: m.material, geos: [], cast: false }); const b = buckets.get(key); b.geos.push(g); b.cast = b.cast || m.castShadow;
+  }
+  for (const b of buckets.values()) {
+    let len = 0; b.geos.forEach(g => len += g.attributes.position.count * 3);
+    const pos = new Float32Array(len), nor = new Float32Array(len); let o = 0;
+    for (const g of b.geos) { pos.set(g.attributes.position.array, o); if (g.attributes.normal) nor.set(g.attributes.normal.array, o); o += g.attributes.position.count * 3; g.dispose(); }
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('normal', new T.BufferAttribute(nor, 3)); geo.computeBoundingSphere();
+    const mesh = new T.Mesh(geo, b.mat); mesh.castShadow = b.cast; mesh.receiveShadow = true; mesh.matrixAutoUpdate = false; scene.add(mesh);
+  }
+  statics.length = 0;
+}
+
+// ---------- penanda pos & papan ----------
+function makeSign(title, sub, state, col) {
+  const w = 560, h = 230;
+  const tex = canvasTex(w, h, c => {
+    c.fillStyle = state === 'done' ? 'rgba(31,165,86,.95)' : state === 'locked' ? 'rgba(70,80,95,.88)' : 'rgba(12,26,44,.9)'; rr(c, 6, 6, w - 12, h - 12, 34); c.fill();
+    c.lineWidth = 8; c.strokeStyle = col; c.stroke(); c.textAlign = 'center';
+    c.fillStyle = '#FFC83D'; c.font = '700 66px Fredoka, sans-serif'; c.fillText(title, w / 2, 84);
+    let fs = 32; c.font = `800 ${fs}px Nunito, sans-serif`; while (c.measureText(sub).width > w - 50 && fs > 16) { fs -= 2; c.font = `800 ${fs}px Nunito, sans-serif`; }
+    c.fillStyle = '#FFFFFF'; c.fillText(sub, w / 2, 150); c.fillStyle = '#C9DAEE'; c.font = '800 26px Nunito, sans-serif';
+    c.fillText(state === 'done' ? 'Selesai ✓' : state === 'locked' ? 'Menunggu guru' : 'Masuk ke lingkaran', w / 2, 196);
+  });
+  const s = new T.Sprite(new T.SpriteMaterial({ map: tex, depthWrite: false })); s.scale.set(6.8, 2.8, 1); return s;
+}
+const COLS = ['#22B35E', '#2F7BFF', '#E3263B', '#FF9F1C', '#9B51E0', '#13B5B5', '#FF5FA2', '#FFC83D'];
+// list: [{pos, title, sub, state:'open'|'done'|'locked'|'off'}]
+W.setPosts = function (list) {
+  const seen = new Set();
+  list.forEach(p => {
+    seen.add(p.pos); const key = p.title + '|' + p.sub + '|' + p.state;
+    let mk = W.markers[p.pos];
+    if (!mk) {
+      const [sx, sz] = W.spotOf(p.pos);
+      const ring = new T.Mesh(new T.TorusGeometry(2.1, .2, 8, 32), new T.MeshBasicMaterial({ color: '#FFC83D' })); ring.rotation.x = -Math.PI / 2; ring.position.set(sx, .35, sz); scene.add(ring);
+      const beam = new T.Mesh(new T.CylinderGeometry(2, 2, 6, 24, 1, true), new T.MeshBasicMaterial({ color: '#FFC83D', transparent: true, opacity: .18, depthWrite: false, side: T.DoubleSide })); beam.position.set(sx, 3, sz); scene.add(beam);
+      mk = W.markers[p.pos] = { ring, beam, key: '', sign: null, x: sx, z: sz };
+    }
+    mk.ring.visible = mk.beam.visible = p.state !== 'off';
+    const col = p.state === 'done' ? '#2BC46B' : p.state === 'locked' ? '#9AA5B1' : '#FFC83D';
+    mk.ring.material.color.set(col); mk.beam.material.color.set(col);
+    if (mk.key !== key) {
+      if (mk.sign) { scene.remove(mk.sign); mk.sign.material.map.dispose(); mk.sign.material.dispose(); }
+      mk.sign = makeSign(p.title, p.sub, p.state, COLS[p.pos % COLS.length]); mk.sign.position.set(mk.x, 7.6 + ((W.signK || 1) - 1) * 2, mk.z); const k = W.signK || 1; mk.sign.scale.set(6.8 * k, 2.8 * k, 1); scene.add(mk.sign); mk.key = key;
+    }
+    mk.sign.visible = p.state !== 'off';
+  });
+  for (const id in W.markers) if (!seen.has(+id)) { const mk = W.markers[id]; mk.ring.visible = mk.beam.visible = false; if (mk.sign) mk.sign.visible = false; }
+};
+W.signScale = k => { for (const id in W.markers) { const s = W.markers[id].sign; if (s) s.scale.set(6.8 * k, 2.8 * k, 1); } W.signK = k; };
+
+// ---------- koin ----------
+W.spawnCoins = function () {
+  for (const c of W.coins) scene.remove(c); W.coins = [];
+  const pts = [];
+  for (const z of [-40, 0, 40]) for (let x = -90; x <= 90; x += 14) if ([-60, 0, 60].every(v => Math.abs(x - v) > 6)) pts.push([x, z]);
+  for (const x of [-60, 0, 60]) for (const z of [-58, -20, 20, 56]) pts.push([x, z]);
+  const g = new T.CylinderGeometry(.55, .55, .15, 16); const m = new T.MeshLambertMaterial({ color: '#FFC83D', emissive: '#6B4E00' });
+  pts.slice(0, 40).forEach(([x, z], i) => { const c = new T.Mesh(g, m); c.rotation.x = Math.PI / 2; c.position.set(x, 1.3, z); c.castShadow = true; c.userData.ph = i; scene.add(c); W.coins.push(c); });
+};
+
+// ---------- fisika ----------
+const RAD = .55, STEP = .7;
+W.RAD = RAD; W.STEP = STEP;
+W.groundAt = function (x, z, y) {
+  let g = 0;
+  for (const c of W.colliders) { if (x > c.x0 - .25 && x < c.x1 + .25 && z > c.z0 - .25 && z < c.z1 + .25 && c.top <= y + STEP && c.top > g) g = c.top; }
+  return g;
+};
+W.pushOut = function (p) {
+  for (const c of W.colliders) {
+    if (c.top <= p.y + STEP) continue;
+    if (p.x < c.x0 - RAD || p.x > c.x1 + RAD || p.z < c.z0 - RAD || p.z > c.z1 + RAD) continue;
+    const nx = Math.max(c.x0, Math.min(p.x, c.x1)), nz = Math.max(c.z0, Math.min(p.z, c.z1)); const dx = p.x - nx, dz = p.z - nz, d2 = dx * dx + dz * dz;
+    if (d2 < RAD * RAD) {
+      if (d2 > 1e-6) { const d = Math.sqrt(d2), k = (RAD - d) / d; p.x += dx * k; p.z += dz * k; }
+      else { const l = p.x - c.x0, r = c.x1 - p.x, f = p.z - c.z0, b = c.z1 - p.z, m = Math.min(l, r, f, b); if (m === l) p.x = c.x0 - RAD; else if (m === r) p.x = c.x1 + RAD; else if (m === f) p.z = c.z0 - RAD; else p.z = c.z1 + RAD; }
+    }
+  }
+};
+W.clamp = function (p, prevZ) {
+  p.x = Math.max(BOUND.x0, Math.min(BOUND.x1, p.x)); p.z = Math.max(BOUND.z0, p.z);
+  if (p.z > BOUND.z1) {
+    const onPierX = p.x > PIER.x0 && p.x < PIER.x1;
+    if (onPierX && p.y > .3) p.z = Math.min(p.z, PIER.z1);
+    else if (prevZ > BOUND.z1 + .05) { p.x = Math.max(PIER.x0 + .05, Math.min(PIER.x1 - .05, p.x)); p.z = Math.min(p.z, PIER.z1); }
+    else p.z = BOUND.z1;
+  }
+};
+W.update = function (dt, t) {
+  for (const f of W.dyn) f(t);
+  for (const c of W.coins) { c.rotation.z += dt * 3; c.position.y = 1.3 + Math.sin(t * 3 + c.userData.ph) * .15; }
+  if (W.star) { W.star.rotation.y += dt * 2; W.star.position.y = W.starBase + Math.sin(t * 2) * .3; }
+  for (const id in W.markers) { const m = W.markers[id]; m.ring.rotation.z += dt * 1.5; m.ring.position.y = .35 + Math.sin(t * 3) * .08; m.beam.material.opacity = .14 + Math.sin(t * 3) * .06; }
+  for (const c of W.clouds) { c.position.x += dt * 1.2; if (c.position.x > 220) c.position.x = -220; }
+};
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+
+<script>
+/* uji mandiri: buka dengan #selftest */
+window.SelfTest = function () {
+  const C = window.Core, X = window.XLSX, out = []; const ok = (n, c, info) => out.push([n, !!c, info || '']);
+  try {
+    const P = C.presetBank(); ok('Paket bawaan 64 soal valid', P.questions.length === 64 && C.validateBank(P).length === 0);
+    ok('Library Excel termuat', !!X);
+    if (X) {
+      const wb = X.utils.book_new(); for (const s of C.templateSheets(P)) X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(s.aoa), s.name);
+      const arr = X.write(wb, { bookType: 'xlsx', type: 'array' }); const rb = X.read(arr, { type: 'array' });
+      const rows = X.utils.sheet_to_json(rb.Sheets['Soal'], { header: 1, defval: '', raw: false, blankrows: false }); const r = C.importRows(rows);
+      ok('Excel tulis→baca→impor 64 soal tanpa error', r.questions.length === 64 && r.errors.length === 0, r.errors.slice(0, 2).map(e => e.msg).join('; '));
+      ok('Teks Arab utuh setelah Excel', r.questions.some(q => q.q.includes('الْإِنْسَانَ')));
+      const players = []; for (let k = 0; k < 25; k++) { const a = {}; P.questions.forEach((q, i) => { if ((i + k) % 4) a[q.id] = (k % 3 === 0 && q.materi.includes('Mim')) ? (q.a + 1) % 4 : q.a; }); players.push({ sid: 's' + k, name: 'Siswa ' + k, answers: a, coins: k, star: !!(k % 2) }); }
+      const st = C.stats(P, players); const sh = C.analysisSheets(P, st, { kelas: '5A', date: 'x' });
+      const wb2 = X.utils.book_new(); sh.forEach(s => X.utils.book_append_sheet(wb2, X.utils.aoa_to_sheet(s.aoa), s.name)); const rb2 = X.read(X.write(wb2, { bookType: 'xlsx', type: 'array' }), { type: 'array' });
+      ok('Excel analisis 4 lembar', rb2.SheetNames.length === 4, rb2.SheetNames.join(', '));
+      ok('Analisis mendeteksi materi lemah (Mim Sukun)', st.materi.find(m => m.name.includes('Mim')).avg < st.materi.find(m => m.name.includes('Adiyat')).avg);
+    }
+    const d = document.createElement('div'); window.KB.rich(d, 'Lanjutan ayat وَالْعَادِيَاتِ ضَبْحًا adalah …'); ok('Teks Arab diberi gaya khusus', d.querySelectorAll('.ar').length === 1 && d.textContent.startsWith('Lanjutan'));
+    ok('Penyimpanan browser', window.KB.Store.ok);
+    ok('16 pos tersedia di peta', Object.keys(window.World.SLOT).length === 16);
+    ok('Podium 3 tingkat', window.World.podium.length === 3);
+  } catch (e) { ok('Tanpa error', false, e.message); }
+  const pass = out.filter(o => o[1]).length; const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:99;background:#fff;color:#000;padding:10px;font:13px monospace;max-width:600px;border-radius:8px';
+  box.id = 'selftestResult'; box.innerHTML = `<b>SELFTEST ${pass}/${out.length}</b><br>` + out.map(o => (o[1] ? 'PASS ' : 'FAIL ') + o[0] + (o[2] ? ' — ' + o[2] : '')).join('<br>');
+  document.body.appendChild(box);
+};
+
+</script>
+
+<script>
+/* Kampung Belajar 3D — aplikasi (siswa, guru, bank soal, analisis, upacara juara) */
+(function () {
+'use strict';
+const C = window.Core, W = window.World, T = window.THREE, POSTS = C.POSTS;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = s => { s = Math.max(0, Math.ceil(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const SHIRTS = ['#E3263B', '#2F7BFF', '#22B35E', '#FF9F1C', '#9B51E0', '#FF5FA2', '#13B5B5', '#F4D03F'];
+const HAIRS = ['#2B1B12', '#5A3A22', '#111111', '#FFFFFF', '#C0392B', '#1F3A93'];
+const PEER_PREFIX = 'kampungbelajar3d-';
+const IS_MOBILE = matchMedia('(pointer:coarse)').matches;
+
+// ---------------- penyimpanan aman ----------------
+const Store = {
+  ok: (() => { try { const k = '__kb'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch (e) { return false; } })(),
+  mem: {},
+  get(k, d) { try { const v = this.ok ? localStorage.getItem(k) : this.mem[k]; return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { const s = JSON.stringify(v); try { if (this.ok) localStorage.setItem(k, s); else this.mem[k] = s; return true; } catch (e) { toast('Penyimpanan penuh. Hapus sesi lama di Analisis.', '#C0392B'); return false; } }
+};
+
+// ---------------- UI dasar ----------------
+const OVS = ['home', 'join', 'quiz', 'bank', 'qform', 'ana', 'menu', 'confirm', 'guide', 'final', 'sres'];
+const show = (id, on) => $(id).classList.toggle('on', on !== false);
+const isOn = id => $(id).classList.contains('on');
+function toast(t, c) { const e = $('toast'); e.textContent = t; e.style.background = c || 'rgba(12,26,44,.92)'; e.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => e.style.display = 'none', 2400); }
+function confirmBox(title, text, yes, onYes) { $('cfTitle').textContent = title; $('cfText').textContent = text; $('cfYes').textContent = yes || 'Ya'; show('confirm'); $('cfYes').onclick = () => { show('confirm', false); onYes(); }; }
+$('cfNo').onclick = () => show('confirm', false);
+document.querySelectorAll('[data-guide]').forEach(b => b.onclick = () => show('guide'));
+$('guideClose').onclick = () => show('guide', false);
+document.querySelectorAll('[data-home]').forEach(b => b.onclick = () => { show('join', false); show('home'); });
+function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+const ARX = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+(?:[\s،]+[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+)*/g;
+const hasAr = s => /[؀-ۿ]/.test(s);
+// isi elemen dengan teks; potongan Arab diberi font & arah RTL
+function rich(el, text) {
+  el.textContent = ''; const s = String(text == null ? '' : text); let last = 0; ARX.lastIndex = 0; let m;
+  while ((m = ARX.exec(s))) { if (m.index > last) el.appendChild(document.createTextNode(s.slice(last, m.index))); const sp = document.createElement('span'); sp.className = 'ar'; sp.dir = 'rtl'; sp.textContent = m[0]; el.appendChild(sp); last = m.index + m[0].length; }
+  if (last < s.length) el.appendChild(document.createTextNode(s.slice(last)));
+  return el;
+}
+const richHTML = t => { const d = document.createElement('span'); rich(d, t); return d.innerHTML; };
+function confetti(n, colors) {
+  const box = $('confetti'); colors = colors || ['#FFC83D', '#E3263B', '#2F7BFF', '#22B35E', '#FF5FA2', '#FFFFFF'];
+  for (let i = 0; i < n; i++) { const e = document.createElement('i'); e.style.left = Math.random() * 100 + 'vw'; e.style.background = colors[i % colors.length];
+    e.style.setProperty('--dx', (Math.random() * 200 - 100) + 'px'); e.style.setProperty('--r', (Math.random() * 1440 - 720) + 'deg');
+    e.style.animationDuration = (2.4 + Math.random() * 2.6) + 's'; e.style.animationDelay = Math.random() * 1.2 + 's'; box.appendChild(e); setTimeout(() => e.remove(), 6500); }
+}
+
+// ---------------- suara ----------------
+let AC = null, muted = Store.get('kb_muted', false);
+function ac() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { AC = null; } return AC; }
+function tone(f, at, d, type, vol) { const a = AC; const o = a.createOscillator(), g = a.createGain(); o.type = type || 'square'; o.frequency.value = f; g.gain.setValueAtTime(vol || .06, at); g.gain.exponentialRampToValueAtTime(.001, at + d); o.connect(g).connect(a.destination); o.start(at); o.stop(at + d + .02); }
+function noiseHit(at, vol) { const a = AC; const b = a.createBuffer(1, a.sampleRate * .08, a.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); const s = a.createBufferSource(); s.buffer = b; const g = a.createGain(); g.gain.value = vol; const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; s.connect(f).connect(g).connect(a.destination); s.start(at); }
+function sfx(type, dur) {
+  if (muted || !ac()) return; const t = AC.currentTime;
+  try {
+    if (type === 'drum') { const n = Math.floor((dur || 2.5) / .06); for (let i = 0; i < n; i++) noiseHit(t + i * .06, .1 + .25 * i / n); return; }
+    if (type === 'fanfare') { [[523, 0, .18], [659, .18, .18], [784, .36, .18], [1047, .54, .5], [784, .95, .15], [1047, 1.1, .7]].forEach(([f, s, d]) => { tone(f, t + s, d, 'square', .07); tone(f / 2, t + s, d, 'triangle', .06); }); return; }
+    if (type === 'boom') { noiseHit(t, .5); tone(90, t, .4, 'sine', .15); return; }
+    const seq = { coin: [[988, .05], [1319, .12]], ok: [[660, .09], [880, .09], [1175, .18]], no: [[220, .18], [180, .22]], jump: [[420, .07], [620, .08]], star: [[784, .08], [988, .08], [1175, .08], [1568, .25]], reveal: [[523, .1], [659, .1], [784, .1], [1047, .3]], click: [[700, .04]] }[type] || [[440, .1]];
+    let at = t; for (const [f, d] of seq) { tone(f, at, d, type === 'no' ? 'sawtooth' : 'square'); at += d * .8; }
+  } catch (e) { }
+}
+function setMuted(m) { muted = m; Store.set('kb_muted', m); $('mSound').textContent = 'Efek suara: ' + (m ? 'OFF' : 'ON'); }
+setMuted(muted);
+
+
+// ---------------- musik latar (dibuat sendiri, tanpa file) ----------------
+const Music = {
+  on: Store.get('kb_music', true), playing: false, bpm: 100, level: 0, step: 0, next: 0, timer: null, bus: null, noise: null, mode: 'lobby',
+  vol: () => IS_MOBILE ? .32 : .5,
+  MODES: { lobby: [100, 0], play: [118, 1], hurry: [138, 1], end: [100, 0], victory: [126, 2] },
+  PROG: ['C', 'G', 'Am', 'F', 'C', 'G', 'F', 'G', 'Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'G'],
+  CH: { C: [60, 64, 67], G: [55, 59, 62], Am: [57, 60, 64], F: [53, 57, 60] }, ROOT: { C: 36, G: 43, Am: 45, F: 41 },
+  MEL: [[76, 0, 79, 0, 84, 0, 79, 76], [74, 0, 79, 0, 74, 72, 74, 0], [72, 0, 76, 0, 81, 0, 79, 76], [72, 0, 69, 0, 72, 74, 76, 0],
+    [79, 0, 79, 81, 79, 0, 76, 72], [74, 0, 74, 76, 79, 0, 74, 0], [72, 0, 76, 0, 74, 72, 69, 0], [67, 0, 74, 0, 79, 0, 0, 0],
+    [81, 0, 0, 79, 76, 0, 72, 0], [77, 0, 0, 76, 72, 0, 69, 0], [76, 79, 84, 0, 79, 76, 72, 0], [74, 0, 79, 0, 74, 0, 0, 0],
+    [81, 0, 84, 0, 81, 79, 76, 0], [77, 0, 81, 0, 77, 76, 72, 0], [79, 0, 74, 0, 79, 81, 79, 0], [74, 0, 0, 0, 67, 69, 71, 74]],
+  hz: m => 440 * Math.pow(2, (m - 69) / 12),
+  setMode(m) { this.mode = m; const v = this.MODES[m] || this.MODES.lobby; this.bpm = v[0]; this.level = v[1]; if (this.on && !this.playing) this.start(); },
+  start() {
+    if (!this.on || this.playing || !ac()) return;
+    const t = AC.currentTime; this.bus = AC.createGain(); const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
+    this.bus.connect(lp).connect(AC.destination); this.bus.gain.setValueAtTime(0, t); this.bus.gain.linearRampToValueAtTime(this.vol(), t + 1.2);
+    if (!this.noise) { const b = AC.createBuffer(1, AC.sampleRate * .3, AC.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.noise = b; }
+    this.playing = true; this.next = t + .12; this.step = 0; clearInterval(this.timer); this.timer = setInterval(() => this.sched(), 30);
+  },
+  stop(fade) {
+    if (!this.playing) return; this.playing = false; clearInterval(this.timer); const g = this.bus; if (!g || !AC) return; const t = AC.currentTime;
+    try { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + (fade || .6)); } catch (e) { }
+    setTimeout(() => { try { g.disconnect(); } catch (e) { } }, ((fade || .6) + .5) * 1000);
+  },
+  toggle() { this.on = !this.on; Store.set('kb_music', this.on); if (this.on) this.start(); else this.stop(.3); $('mMusic').textContent = 'Musik: ' + (this.on ? 'ON' : 'OFF'); },
+  sched() {
+    if (!AC || AC.state !== 'running') return;
+    if (this.next < AC.currentTime - .5) this.next = AC.currentTime + .05;   // setelah tab tertidur
+    const spb = 60 / this.bpm / 4;
+    while (this.next < AC.currentTime + .18) { try { this.play(this.step, this.next); } catch (e) { } this.next += spb; this.step = (this.step + 1) % 256; }
+  },
+  v(type, f, t, d, vol, att) { const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + (att || .006)); g.gain.exponentialRampToValueAtTime(.0008, t + d); o.connect(g).connect(this.bus); o.start(t); o.stop(t + d + .03); },
+  nz(t, d, vol, hp) { const s = AC.createBufferSource(); s.buffer = this.noise; const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp; const g = AC.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + d); s.connect(f).connect(g).connect(this.bus); s.start(t); s.stop(t + d + .02); },
+  kick(t) { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + .12); g.gain.setValueAtTime(.32, t); g.gain.exponentialRampToValueAtTime(.001, t + .16); o.connect(g).connect(this.bus); o.start(t); o.stop(t + .18); },
+  play(step, t) {
+    const bar = Math.floor(step / 16) % 16, s = step % 16, ch = this.PROG[bar], L = this.level, spb = 60 / this.bpm / 4;
+    const root = this.ROOT[ch], notes = this.CH[ch];
+    // drum
+    if (L >= 1) { if (s === 0 || s === 8 || s === 10) this.kick(t); if (s === 4 || s === 12) this.nz(t, .12, .09, 1500); if (s % 2 === 0) this.nz(t, .035, s % 4 === 2 ? .035 : .02, 7000); }
+    else { if (s === 0) this.kick(t); if (s === 8) this.nz(t, .05, .03, 6000); }
+    // bass
+    const bp = { 0: 0, 4: 12, 6: 0, 8: 0, 10: 7, 12: 12, 14: 7 }; if (bp[s] !== undefined && (L >= 1 || s % 8 === 0)) this.v('triangle', this.hz(root + bp[s]), t, spb * 1.8, L >= 1 ? .14 : .1);
+    // akor
+    if (L >= 1) { if (s % 4 === 2) notes.forEach(n => this.v('square', this.hz(n), t, spb * .9, .012)); }
+    else if (s === 0) notes.forEach(n => this.v('triangle', this.hz(n), t, spb * 14, .03, .25));
+    // melodi
+    if (s % 2 === 0) { const m = this.MEL[bar][s / 2]; if (m) { this.v('square', this.hz(m), t, spb * 1.7, L >= 1 ? .032 : .022); if (L >= 2) this.v('triangle', this.hz(m + 12), t, spb * 1.2, .02); } }
+    if (L >= 2 && s % 2 === 1) this.v('sine', this.hz(notes[(s >> 1) % 3] + 24), t, spb * .8, .018);
+  }
+};
+$('mMusic').textContent = 'Musik: ' + (Music.on ? 'ON' : 'OFF');
+document.addEventListener('visibilitychange', () => { if (!AC) return; if (document.hidden) { if (MODE !== 'host') AC.suspend(); } else AC.resume(); });
+
+// ---------------- three.js ----------------
+if (!T) { $('loading').textContent = 'Gagal memuat 3D. Periksa koneksi internet lalu muat ulang halaman.'; throw new Error('three'); }
+const renderer = new T.WebGLRenderer({ canvas: $('gl'), antialias: !IS_MOBILE || devicePixelRatio < 2, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, IS_MOBILE ? 1.5 : 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.outputEncoding = T.sRGBEncoding;
+const scene = new T.Scene(); const SKY = new T.Color('#9FD6FF');
+scene.background = SKY.clone(); scene.fog = new T.Fog('#9FD6FF', 95, 260);
+const camera = new T.PerspectiveCamera(55, 1, .1, 900);
+const hemi = new T.HemisphereLight('#DDF1FF', '#5E8F45', .75); scene.add(hemi);
+const sun = new T.DirectionalLight('#FFF6E5', .95); sun.castShadow = true; sun.shadow.mapSize.set(IS_MOBILE ? 1024 : 2048, IS_MOBILE ? 1024 : 2048);
+const sc = sun.shadow.camera; sc.left = -40; sc.right = 40; sc.top = 40; sc.bottom = -40; sc.near = 1; sc.far = 260; sun.shadow.bias = -.0006;
+scene.add(sun, sun.target);
+function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+// ---------------- avatar ----------------
+const MC = {}; const M = c => MC[c] || (MC[c] = new T.MeshLambertMaterial({ color: c }));
+const faceTex = W.canvasTex(64, 64, x => { x.fillStyle = '#F2C29A'; x.fillRect(0, 0, 64, 64); x.fillStyle = '#1B1B1B'; x.fillRect(17, 22, 8, 12); x.fillRect(39, 22, 8, 12); x.fillStyle = '#fff'; x.fillRect(19, 24, 3, 3); x.fillRect(41, 24, 3, 3); x.strokeStyle = '#1B1B1B'; x.lineWidth = 4; x.beginPath(); x.arc(32, 38, 11, .25 * Math.PI, .75 * Math.PI); x.stroke(); x.fillStyle = 'rgba(255,120,120,.45)'; x.fillRect(10, 38, 8, 5); x.fillRect(46, 38, 8, 5); });
+const faceMat = new T.MeshLambertMaterial({ map: faceTex });
+function label(text, bg, scale) {
+  const fs = 44, ctx = document.createElement('canvas').getContext('2d'); ctx.font = `900 ${fs}px Nunito, sans-serif`;
+  const w = Math.ceil(ctx.measureText(text).width) + 40, h = fs + 24;
+  const tex = W.canvasTex(w, h, x => { x.font = `900 ${fs}px Nunito, sans-serif`; x.fillStyle = bg; W.rr(x, 0, 0, w, h, h / 2); x.fill(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, w / 2, h / 2 + 2); });
+  const s = new T.Sprite(new T.SpriteMaterial({ map: tex, depthWrite: false })); s.scale.set(w / h * .62 * scale, .62 * scale, 1); s.renderOrder = 10; return s;
+}
+function makeAvatar(shirt, hair, name, isMe) {
+  const g = new T.Group(); const skin = M('#F2C29A'), pants = M('#26324A'), sh = M(shirt), hm = M(hair);
+  const limb = (w, h, d, mat, px, py) => { const piv = new T.Group(); piv.position.set(px, py, 0); const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.y = -h / 2; m.castShadow = true; piv.add(m); g.add(piv); return piv; };
+  const legL = limb(.52, 1.05, .55, pants, -.29, 1.05), legR = limb(.52, 1.05, .55, pants, .29, 1.05);
+  for (const l of [legL, legR]) { const s = new T.Mesh(new T.BoxGeometry(.56, .2, .62), M('#1A1A1A')); s.position.set(0, -.98, .03); l.add(s); }
+  const body = new T.Mesh(new T.BoxGeometry(1.15, 1.15, .62), sh); body.position.y = 1.62; body.castShadow = true; g.add(body);
+  const armL = limb(.42, 1.1, .45, sh, -.8, 2.15), armR = limb(.42, 1.1, .45, sh, .8, 2.15);
+  for (const a of [armL, armR]) { const h = new T.Mesh(new T.BoxGeometry(.42, .3, .45), skin); h.position.y = -1.2; a.add(h); }
+  const head = new T.Group(); head.position.y = 2.68; g.add(head);
+  const hm1 = new T.Mesh(new T.BoxGeometry(.9, .9, .9), [skin, skin, skin, skin, faceMat, skin]); hm1.castShadow = true; head.add(hm1);
+  const ht = new T.Mesh(new T.BoxGeometry(.98, .3, .98), hm); ht.position.set(0, .54, -.02); head.add(ht);
+  const hb = new T.Mesh(new T.BoxGeometry(.98, .6, .2), hm); hb.position.set(0, .27, -.42); head.add(hb);
+  const lb = label(name, isMe ? 'rgba(227,38,59,.95)' : 'rgba(12,26,44,.85)', 1); lb.position.y = 3.95; g.add(lb);
+  g.userData = { legL, legR, armL, armR, body, head, lb, sw: 0, air: 0 }; scene.add(g); return g;
+}
+function addCrown(av) {
+  const c = new T.Group(); const gold = new T.MeshLambertMaterial({ color: '#FFC83D', emissive: '#6B4E00' });
+  const band = new T.Mesh(new T.CylinderGeometry(.62, .62, .28, 8, 1, true), gold); band.material.side = T.DoubleSide; c.add(band);
+  for (let i = 0; i < 6; i++) { const sp = new T.Mesh(new T.ConeGeometry(.16, .42, 4), gold); const a = i / 6 * Math.PI * 2; sp.position.set(Math.sin(a) * .58, .32, Math.cos(a) * .58); c.add(sp); const j = new T.Mesh(new T.SphereGeometry(.07, 6, 4), M(i % 2 ? '#E3263B' : '#2F7BFF')); j.position.set(Math.sin(a) * .62, 0, Math.cos(a) * .62); c.add(j); }
+  c.position.y = 1.02; c.scale.setScalar(1.35); av.userData.head.add(c); av.userData.crown = c; av.userData.lb.position.y = 4.9;
+}
+function removeAvatar(a) { scene.remove(a); a.userData.lb.material.map.dispose(); }
+function animAvatar(a, speed, air, t, dt, cheer) {
+  const u = a.userData; const k = Math.min(1, speed / 7); u.sw += dt * (6 + 8 * k); const s = Math.sin(u.sw) * k; const bl = Math.min(1, dt * 14);
+  u.air += ((air ? -2.7 : 0) - u.air) * bl;
+  u.legL.rotation.x += (s - u.legL.rotation.x) * bl; u.legR.rotation.x += (-s - u.legR.rotation.x) * bl;
+  const al = cheer ? -2.9 + Math.sin(t * 9) * .35 : air ? u.air : -s * .85, ar = cheer ? -2.9 - Math.sin(t * 9) * .35 : air ? u.air : s * .85;
+  u.armL.rotation.x += (al - u.armL.rotation.x) * bl; u.armR.rotation.x += (ar - u.armR.rotation.x) * bl;
+  u.armL.rotation.z = (air || cheer) ? -.3 : 0; u.armR.rotation.z = (air || cheer) ? .3 : 0;
+  const bob = k > .05 ? Math.abs(Math.cos(u.sw)) * .12 * k : Math.sin(t * 2.2) * .025; u.body.position.y = 1.62 + bob; u.head.position.y = 2.68 + bob;
+}
+
+// ---------------- efek partikel ----------------
+const fx = []; const fxGeo = new T.BoxGeometry(.2, .2, .06); const sparkGeo = new T.SphereGeometry(.16, 6, 4); const FXM = {};
+const fxMat = c => FXM[c] || (FXM[c] = new T.MeshBasicMaterial({ color: c }));
+const FX_COL = ['#FFC83D', '#E3263B', '#2F7BFF', '#22B35E', '#FF5FA2', '#FFFFFF', '#9B51E0', '#13B5B5'];
+function burst(x, y, z, n, cols) { for (let i = 0; i < (n || 36); i++) { const m = new T.Mesh(fxGeo, fxMat((cols || FX_COL)[i % (cols || FX_COL).length])); m.position.set(x, y, z); m.userData = { v: new T.Vector3((Math.random() - .5) * 9, 5 + Math.random() * 7, (Math.random() - .5) * 9), l: 1.5, g: 18, spin: 1 }; scene.add(m); fx.push(m); } }
+function firework(x, z, h) {
+  const col = FX_COL[Math.floor(Math.random() * FX_COL.length)]; const r = new T.Mesh(sparkGeo, fxMat('#FFF3B0')); r.position.set(x, 1, z);
+  r.userData = { v: new T.Vector3((Math.random() - .5) * 2, 22 + Math.random() * 5, (Math.random() - .5) * 2), l: (h || .6), g: 8, rocket: col }; scene.add(r); fx.push(r);
+}
+function explode(p, col) {
+  sfx('boom'); const n = 56;
+  for (let i = 0; i < n; i++) { const m = new T.Mesh(sparkGeo, fxMat(i % 5 === 0 ? '#FFFFFF' : col)); m.position.copy(p); const th = Math.random() * Math.PI * 2, ph = Math.acos(Math.random() * 2 - 1), sp = 9 + Math.random() * 4;
+    m.userData = { v: new T.Vector3(Math.sin(ph) * Math.cos(th) * sp, Math.cos(ph) * sp, Math.sin(ph) * Math.sin(th) * sp), l: 1.3 + Math.random() * .5, g: 6, fade: 1 }; scene.add(m); fx.push(m); }
+}
+function stepFx(dt) {
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const m = fx[i], u = m.userData; u.v.y -= u.g * dt; m.position.addScaledVector(u.v, dt); if (u.spin) { m.rotation.x += dt * 8; m.rotation.y += dt * 6; }
+    if (u.fade) { const s = Math.max(.05, u.l / 1.6); m.scale.setScalar(s); }
+    u.l -= dt; if (u.l <= 0) { if (u.rocket) explode(m.position, u.rocket); scene.remove(m); fx.splice(i, 1); }
+  }
+}
+
+// =====================================================================
+//                               SISWA
+// =====================================================================
+let MODE = null;                  // 'solo' | 'online' | 'host'
+let BANK = null;                  // paket soal aktif (siswa: dari guru)
+let phase = 'lobby', remaining = 0;
+let peer = null, conn = null, joinCode = '';
+const me = { name: '', shirt: SHIRTS[0], hair: HAIRS[0], sid: '', x: W.spawn[0], y: 0, z: W.spawn[1], vx: 0, vz: 0, vy: 0, r: 0, grounded: true, answers: {}, coins: 0, star: false, avatar: null };
+const others = new Map(); let roster = [];
+let quizPos = -1, curQ = null;
+let camYaw = Math.PI, camPitch = .42, camDist = 12;
+const input = { x: 0, y: 0, jump: false }; const keys = {};
+try { me.sid = localStorage.getItem('kb_sid') || ''; } catch (e) { }
+if (!me.sid) { me.sid = 's' + Math.random().toString(36).slice(2, 10); try { localStorage.setItem('kb_sid', me.sid); } catch (e) { } }
+
+function swatches(el, list, key) { list.forEach((c, i) => { const b = document.createElement('button'); b.type = 'button'; b.style.background = c; b.className = i === 0 ? 'sel' : ''; b.setAttribute('aria-label', 'Warna ' + (i + 1)); b.onclick = () => { me[key] = c; el.querySelectorAll('button').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); }; el.appendChild(b); }); }
+swatches($('swShirt'), SHIRTS, 'shirt'); swatches($('swHair'), HAIRS, 'hair');
+$('jName').value = Store.get('kb_name', '');
+
+$('goJoin').onclick = () => { ac(); Music.setMode('lobby'); show('home', false); show('join'); $('jErr').textContent = ''; };
+$('goSolo').onclick = () => { ac(); Music.setMode('play'); MODE = 'solo'; me.name = 'Kamu'; BANK = Bank.active(); phase = 'play'; remaining = 20 * 60; show('home', false); startStudent(); };
+$('goHost').onclick = () => { ac(); Music.setMode('lobby'); MODE = 'host'; show('home', false); Host.start(); };
+$('joinForm').onsubmit = e => {
+  e.preventDefault(); ac();
+  const code = $('jCode').value.trim(), name = $('jName').value.trim().replace(/\s+/g, ' ');
+  if (!/^\d{4}$/.test(code)) return $('jErr').textContent = 'Kode harus 4 angka.';
+  if (!name) return $('jErr').textContent = 'Tulis nama panggilanmu dulu.';
+  if (typeof Peer === 'undefined') return $('jErr').textContent = 'Tidak ada internet. Periksa koneksi HP.';
+  me.name = name; Store.set('kb_name', name); joinCode = code; MODE = 'online'; $('jBtn').disabled = true; $('jErr').textContent = 'Menghubungkan…';
+  peer = new Peer();
+  peer.on('open', () => connectHost(true));
+  peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) { } });
+  peer.on('error', err => {
+    if (!isOn('join')) { if (err.type === 'peer-unavailable') banner('Layar guru tidak ditemukan. Pastikan guru masih membuka game.', '#C0392B'); return; }
+    $('jBtn').disabled = false; $('jErr').textContent = err.type === 'peer-unavailable' ? 'Kode tidak ditemukan. Cek lagi kode di layar guru.' : 'Koneksi bermasalah (' + err.type + '). Coba lagi.';
+  });
+};
+let reconnectTimer = null, reconnectTries = 0;
+function connectHost(first) {
+  conn = peer.connect(PEER_PREFIX + joinCode, { serialization: 'json', reliable: true });
+  const to = setTimeout(() => { if (conn && !conn.open && first) { $('jErr').textContent = 'Tidak tersambung. Cek kode dan pastikan layar guru terbuka.'; $('jBtn').disabled = false; } }, 10000);
+  conn.on('open', () => { clearTimeout(to); reconnectTries = 0; conn.send({ t: 'hello', name: me.name, shirt: me.shirt, hair: me.hair, sid: me.sid }); });
+  conn.on('data', onHostMsg);
+  conn.on('close', () => { if (MODE !== 'online') return; banner('Sambungan terputus. Menyambung ulang…', '#C0392B'); scheduleReconnect(); });
+}
+function scheduleReconnect() { clearTimeout(reconnectTimer); if (reconnectTries++ > 20) { banner('Sambungan ke guru terputus. Muat ulang halaman lalu masuk lagi dengan nama yang sama.', '#C0392B'); return; } reconnectTimer = setTimeout(() => { try { if (peer.disconnected) peer.reconnect(); connectHost(false); } catch (e) { scheduleReconnect(); } }, 2500); }
+function banner(t, bg) { const b = $('banner'); if (!t) { b.style.display = 'none'; return; } b.textContent = t; b.style.background = bg || 'rgba(12,26,44,.9)'; b.style.display = 'block'; }
+
+function onHostMsg(m) {
+  if (!m || typeof m !== 'object') return;
+  if (m.t === 'welcome') {
+    const b = C.sanitizeBank(m.bank || {}); if (C.validateBank(b).length) { banner('Paket soal dari guru bermasalah.', '#C0392B'); return; }
+    BANK = b; phase = m.phase; remaining = m.remaining;
+    const r = m.resume || {}; me.answers = {}; for (const k in (r.answers || {})) if (b.questions.some(q => q.id === k)) me.answers[k] = r.answers[k] | 0;
+    me.coins = Math.min(40, r.coins | 0); me.star = !!r.star;
+    if (!me.avatar) { show('join', false); startStudent(); } else { refreshPosts(); updateHud(); if (curQ) closeQuiz(); }
+    if (W.star) W.star.visible = !me.star;
+    lobbyBanner(); return;
+  }
+  if (m.t === 'roster') { const prev = phase; phase = m.phase; remaining = m.remaining; roster = m.players || []; renderTop(roster); syncOthers(roster);
+    if (prev !== phase) { lobbyBanner(); refreshPosts(); if (phase === 'play') { if ($('sres').classList.contains('on')) show('sres', false); toast('Permainan dimulai! Ikuti panah kuning', '#1FA556'); sfx('star'); } } return; }
+  if (m.t === 'p') { const d = m.d || []; for (let i = 0; i + 6 < d.length + 1; i += 7) { const o = others.get(d[i]); if (o) { o.tx = d[i + 1]; o.tz = d[i + 2]; o.ty = d[i + 3]; o.tr = d[i + 4]; o.ts = d[i + 5]; o.ta = d[i + 6]; } } return; }
+  if (m.t === 'ceremony') { phase = 'end'; refreshPosts(); closeQuiz(); StudentCer.run(m); return; }
+  if (m.t === 'reset') { me.answers = {}; me.coins = 0; me.star = false; if (W.star) W.star.visible = true; W.spawnCoins(); me.x = W.spawn[0]; me.z = W.spawn[1]; me.y = 0; show('sres', false); refreshPosts(); updateHud(); return; }
+}
+function lobbyBanner() { if (MODE !== 'online') return; if (!StudentCer.busy) Music.setMode(phase === 'play' ? (remaining < 60 ? 'hurry' : 'play') : 'lobby'); if (phase === 'lobby') banner('Menunggu instruksi guru… kamu boleh jalan-jalan dulu', 'rgba(12,26,44,.9)'); else if (phase === 'play') banner(null); else banner('Permainan selesai. Tunggu instruksi guru.', 'rgba(12,26,44,.9)'); }
+function syncOthers(list) {
+  const seen = new Set();
+  for (const p of list) { if (p.id === me.sid) continue; seen.add(p.id); let o = others.get(p.id);
+    if (!o) { o = { av: makeAvatar(p.shirt, p.hair, p.name, false), x: W.spawn[0], y: 0, z: W.spawn[1], r: 0, tx: undefined }; others.set(p.id, o); } }
+  for (const [id, o] of others) if (!seen.has(id)) { removeAvatar(o.av); others.delete(id); }
+}
+function stepOthers(dt, t) { const k = 1 - Math.exp(-12 * dt);
+  for (const o of others.values()) { if (o.tx === undefined) { o.av.visible = false; continue; } o.av.visible = true; o.x += (o.tx - o.x) * k; o.y += (o.ty - o.y) * k; o.z += (o.tz - o.z) * k; let d = o.tr - o.r; d = Math.atan2(Math.sin(d), Math.cos(d)); o.r += d * k; o.av.position.set(o.x, o.y, o.z); o.av.rotation.y = o.r; animAvatar(o.av, o.ts || 0, !!o.ta, t, dt); } }
+
+let sendTimer = null;
+function startStudent() {
+  $('hud').classList.add('on'); $('pName').textContent = me.name; $('pDot').style.background = me.shirt;
+  me.avatar = makeAvatar(me.shirt, me.hair, me.name, true); me.x = W.spawn[0] + (Math.random() * 6 - 3); me.z = W.spawn[1]; W.spawnCoins();
+  if (W.star) W.star.visible = !me.star;
+  refreshPosts(); updateHud(); lobbyBanner();
+  if (MODE === 'solo') renderTop([{ name: me.name, shirt: me.shirt, score: myScore().score }]);
+  clearInterval(sendTimer);
+  sendTimer = setInterval(() => { if (MODE === 'online' && conn && conn.open) conn.send({ t: 'st', x: +me.x.toFixed(1), y: +me.y.toFixed(1), z: +me.z.toFixed(1), r: +me.r.toFixed(2), s: +Math.hypot(me.vx, me.vz).toFixed(1), a: me.grounded ? 0 : 1 }); }, 125);
+}
+const myScore = () => C.scoreOf(BANK, me.answers, me.coins, me.star);
+function refreshPosts() {
+  if (!BANK) return; const done = new Set(myScore().done);
+  W.setPosts(C.activePosts(BANK).map(a => ({ pos: a.pos, title: 'POS ' + (a.pos + 1) + ' · ' + POSTS[a.pos].name, sub: a.materi.join(' / '),
+    state: done.has(a.pos) ? 'done' : (MODE === 'online' && phase !== 'play') ? 'locked' : 'open' })));
+}
+function updateHud() {
+  if (!BANK) return; const s = myScore(); const act = C.activePosts(BANK).length;
+  $('pScore').textContent = s.score + ' poin'; $('pProg').textContent = 'Pos ' + s.done.length + '/' + act + ' · Soal ' + s.answered + '/' + s.total; $('pBar').style.width = (act ? s.done.length / act * 100 : 0) + '%';
+}
+function renderTop(list) { const s = [...list].sort((a, b) => b.score - a.score).slice(0, 3); $('pTop').innerHTML = '<div class="muted" style="font-weight:900;font-size:11px">PERINGKAT</div>' + s.map((p, i) => `<div class="mini"><span>${i + 1}.</span><span class="dot" style="background:${esc(p.shirt)}"></span><span>${esc(p.name)}</span><b>${p.score | 0}</b></div>`).join(''); }
+function sendAns(qid, c) { if (MODE === 'online' && conn && conn.open) conn.send({ t: 'ans', qid, c }); }
+function sendExtra() { if (MODE === 'online' && conn && conn.open) conn.send({ t: 'extra', coins: me.coins, star: me.star }); }
+function afterScore() { updateHud(); if (MODE === 'solo') renderTop([{ name: me.name, shirt: me.shirt, score: myScore().score }]); }
+
+// kontrol
+addEventListener('keydown', e => { if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement && document.activeElement.tagName)) return; keys[e.code] = true; if (e.code === 'Space' && $('hud').classList.contains('on')) { input.jump = true; e.preventDefault(); } if (e.code === 'KeyE' && $('enterBtn').style.display === 'block') $('enterBtn').click(); });
+addEventListener('keyup', e => { keys[e.code] = false; });
+(function () { const st = $('stick'), kn = $('knob'); let id = null, cx = 0, cy = 0;
+  const set = (dx, dy) => { const m = Math.hypot(dx, dy), max = 46; if (m > max) { dx *= max / m; dy *= max / m; } kn.style.transform = `translate(${dx}px,${dy}px)`; input.x = dx / max; input.y = dy / max; };
+  st.addEventListener('pointerdown', e => { id = e.pointerId; st.setPointerCapture(id); const r = st.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; set(e.clientX - cx, e.clientY - cy); });
+  st.addEventListener('pointermove', e => { if (e.pointerId === id) set(e.clientX - cx, e.clientY - cy); });
+  const up = e => { if (e.pointerId === id) { id = null; set(0, 0); } }; st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up); st.addEventListener('lostpointercapture', up); })();
+$('jumpBtn').addEventListener('pointerdown', e => { e.preventDefault(); input.jump = true; });
+(function () { const cv = $('gl'); let id = null, lx = 0, ly = 0;
+  cv.addEventListener('pointerdown', e => { if (id !== null) return; id = e.pointerId; lx = e.clientX; ly = e.clientY; try { cv.setPointerCapture(id); } catch (er) { } });
+  cv.addEventListener('pointermove', e => { if (e.pointerId !== id) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+    if (MODE === 'host') { Host.camYaw -= dx * .004; Host.camPitch = Math.max(.35, Math.min(1.35, Host.camPitch + dy * .003)); } else { camYaw -= dx * .006; camPitch = Math.max(.15, Math.min(1.1, camPitch + dy * .004)); } });
+  const up = e => { if (e.pointerId === id) id = null; }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', e => { if (MODE === 'host') Host.camDist = Math.max(60, Math.min(230, Host.camDist + e.deltaY * .08)); else camDist = Math.max(6, Math.min(22, camDist + e.deltaY * .01)); }, { passive: true }); })();
+
+function nearPost() { if (!BANK) return null; for (const a of C.activePosts(BANK)) { const [sx, sz] = W.spotOf(a.pos); if (Math.hypot(me.x - sx, me.z - sz) < 2.9 && me.y < 2) return a.pos; } return null; }
+const anyOverlay = () => ['quiz', 'menu', 'confirm', 'guide', 'sres'].some(isOn);
+const tmpV = new T.Vector3();
+function stepStudent(dt, t) {
+  if (MODE === 'solo' && phase === 'play') { remaining -= dt; if (remaining <= 0) { phase = 'end'; soloEnd(); } }
+  let ix = input.x, iy = input.y;
+  if (keys.KeyA || keys.ArrowLeft) ix = -1; if (keys.KeyD || keys.ArrowRight) ix = 1; if (keys.KeyW || keys.ArrowUp) iy = -1; if (keys.KeyS || keys.ArrowDown) iy = 1;
+  const frozen = anyOverlay(); if (frozen) { ix = iy = 0; input.jump = false; }
+  const fx_ = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = -fz, rz = fx_;
+  let mx = fx_ * (-iy) + rx * ix, mz = fz * (-iy) + rz * ix; const ml = Math.hypot(mx, mz); if (ml > 1) { mx /= ml; mz /= ml; }
+  const acc = 1 - Math.exp(-11 * dt); me.vx += (mx * 9.5 - me.vx) * acc; me.vz += (mz * 9.5 - me.vz) * acc;
+  if (ml > .15) { let d = Math.atan2(mx, mz) - me.r; d = Math.atan2(Math.sin(d), Math.cos(d)); me.r += d * Math.min(1, dt * 12); }
+  const pz = me.z; me.x += me.vx * dt; me.z += me.vz * dt; W.pushOut(me); W.clamp(me, pz);
+  if (input.jump && me.grounded) { me.vy = 10; me.grounded = false; sfx('jump'); } input.jump = false;
+  me.vy -= 26 * dt; me.y += me.vy * dt; const g = W.groundAt(me.x, me.z, me.y);
+  if (me.y <= g) { me.y = g; me.vy = 0; me.grounded = true; } else if (me.y > g + .05) me.grounded = false;
+  if (me.y < -5) { me.x = W.spawn[0]; me.z = W.spawn[1]; me.y = 0; }
+  const av = me.avatar; av.position.set(me.x, me.y, me.z); av.rotation.y = me.r; animAvatar(av, Math.hypot(me.vx, me.vz), !me.grounded, t, dt);
+  const canPlay = phase === 'play';
+  if (canPlay) {
+    for (let i = W.coins.length - 1; i >= 0; i--) { const c = W.coins[i]; if (Math.hypot(c.position.x - me.x, c.position.z - me.z) < 1.5 && Math.abs(c.position.y - (me.y + 1.3)) < 1.7) { scene.remove(c); W.coins.splice(i, 1); if (me.coins < 40) { me.coins++; sfx('coin'); sendExtra(); afterScore(); } } }
+    if (!me.star && W.star && W.star.visible && W.star.position.distanceTo(tmpV.set(me.x, me.y + 1.5, me.z)) < 2.3) { me.star = true; W.star.visible = false; sfx('star'); burst(me.x, me.y + 2, me.z, 60); sendExtra(); afterScore(); toast('Bintang didapat! +' + C.SCORE.star, '#9B51E0'); }
+  }
+  const np = frozen ? null : nearPost(); const eb = $('enterBtn');
+  if (np !== null) { eb.style.display = 'block'; eb.dataset.p = np; const done = myScore().done.includes(np); eb.textContent = canPlay ? (done ? 'Lihat Pos ' : 'Masuk Pos ') + (np + 1) : 'Pos dibuka saat guru mulai'; eb.disabled = !canPlay; } else eb.style.display = 'none';
+  $('pTime').textContent = phase === 'play' ? fmt(remaining) : phase === 'lobby' ? 'Menunggu' : 'Selesai';
+  if (phase === 'play' && remaining < 60 && Music.mode === 'play') Music.setMode('hurry');
+  if (MODE === 'online' && phase === 'play') remaining = Math.max(0, remaining - dt);
+  // kamera orang ketiga
+  const tgt = tmpV.set(me.x, me.y + 2.4, me.z);
+  const want = new T.Vector3(me.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist, me.y + 2.4 + Math.sin(camPitch) * camDist, me.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist);
+  camera.position.lerp(want, 1 - Math.exp(-10 * dt)); camera.lookAt(tgt);
+  sun.position.set(me.x + 30, 60, me.z + 20); sun.target.position.set(me.x, 0, me.z);
+  guideTick(); mmTick(t);
+}
+// panah penunjuk pos terdekat
+let gaLast = 0;
+function guideTick() {
+  const el = $('guideArrow'); if (!BANK || phase !== 'play' || anyOverlay()) { el.style.display = 'none'; return; }
+  const done = new Set(myScore().done); let best = null, bd = 1e9;
+  for (const a of C.activePosts(BANK)) { if (done.has(a.pos)) continue; const [sx, sz] = W.spotOf(a.pos); const d = Math.hypot(sx - me.x, sz - me.z); if (d < bd) { bd = d; best = [a.pos, sx, sz]; } }
+  if (!best) { el.style.display = 'flex'; $('gaSvg').style.transform = 'none'; $('gaTxt').textContent = 'Semua pos selesai! Coba Menara Bintang'; return; }
+  if (bd < 3) { el.style.display = 'none'; return; }
+  const fx_ = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = -fz, rz = fx_; const dx = best[1] - me.x, dz = best[2] - me.z;
+  const ang = Math.atan2(dx * rx + dz * rz, dx * fx_ + dz * fz);
+  el.style.display = 'flex'; $('gaSvg').style.transform = `rotate(${ang}rad)`;
+  const now = performance.now(); if (now - gaLast > 300) { gaLast = now; $('gaTxt').textContent = POSTS[best[0]].name + ' · ' + Math.round(bd) + ' m'; }
+}
+// peta mini
+const mmc = $('mm').getContext('2d'); let mmLast = 0;
+function mmTick() {
+  const now = performance.now(); if (now - mmLast < 150) return; mmLast = now;
+  const c = mmc, Wd = 300, Hd = 220, X0 = -108, X1 = 108, Z0 = -90, Z1 = 82; const px = x => (x - X0) / (X1 - X0) * Wd, pz = z => (z - Z0) / (Z1 - Z0) * Hd;
+  c.fillStyle = '#6DB85A'; c.fillRect(0, 0, Wd, Hd); c.fillStyle = '#3BA3D9'; c.fillRect(0, pz(68), Wd, Hd); c.fillStyle = '#EED9A4'; c.fillRect(0, pz(61), Wd, pz(68) - pz(61));
+  c.strokeStyle = '#4A4F58'; c.lineWidth = 5; c.beginPath(); for (const z of [-40, 0, 40]) { c.moveTo(px(-102), pz(z)); c.lineTo(px(102), pz(z)); } for (const x of [-60, 0, 60]) { c.moveTo(px(x), pz(-67)); c.lineTo(px(x), pz(65)); } c.stroke();
+  if (BANK) { const done = new Set(myScore().done); for (const a of C.activePosts(BANK)) { const [sx, sz] = W.spotOf(a.pos); c.fillStyle = done.has(a.pos) ? '#2BC46B' : phase === 'play' || MODE === 'solo' ? '#FFC83D' : '#9AA5B1'; c.fillRect(px(sx) - 7, pz(sz) - 7, 14, 14); c.fillStyle = '#13202F'; c.font = '900 11px Nunito'; c.textAlign = 'center'; c.fillText(a.pos + 1, px(sx), pz(sz) + 4); } }
+  for (const o of others.values()) if (o.tx !== undefined) { c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(px(o.x), pz(o.z), 3.5, 0, 7); c.fill(); }
+  c.save(); c.translate(px(me.x), pz(me.z)); c.rotate(-me.r + Math.PI); c.fillStyle = '#E3263B'; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -10); c.lineTo(7, 8); c.lineTo(-7, 8); c.closePath(); c.fill(); c.stroke(); c.restore();
+}
+
+// ---------------- kuis ----------------
+$('enterBtn').onclick = () => { if (phase !== 'play') return; openQuiz(+$('enterBtn').dataset.p); };
+$('qClose').onclick = () => closeQuiz();
+function closeQuiz() { show('quiz', false); quizPos = -1; curQ = null; }
+function posQuestions(p) { return BANK.questions.filter(q => q.pos === p); }
+function openQuiz(p) { quizPos = p; show('quiz'); sfx('click'); showQ(); }
+function showQ() {
+  const qs = posQuestions(quizPos); const left = qs.filter(q => me.answers[q.id] === undefined);
+  $('qPos').textContent = 'Pos ' + (quizPos + 1) + ' · ' + POSTS[quizPos].name; $('qFb').style.display = 'none'; $('qNext').style.display = 'none';
+  if (!left.length) {
+    curQ = null; const ok = qs.filter(q => me.answers[q.id] === q.a).length; $('qSub').textContent = [...new Set(qs.map(q => q.materi))].join(' / ');
+    $('qNum').textContent = 'Selesai'; $('qText').innerHTML = `Pos ini sudah kamu taklukkan! Benar <b>${ok}</b> dari ${qs.length} soal.`; $('qOpts').innerHTML = ''; return;
+  }
+  curQ = left[0]; const idx = qs.indexOf(curQ);
+  $('qSub').textContent = curQ.materi + (curQ.sub && curQ.sub !== curQ.materi ? ' · ' + curQ.sub : '');
+  $('qNum').textContent = 'Soal ' + (idx + 1) + '/' + qs.length; rich($('qText'), curQ.q);
+  const box = $('qOpts'); box.innerHTML = '';
+  curQ.o.forEach((o, i) => { const b = document.createElement('button'); b.className = 'opt' + (hasAr(o) && !/[a-z]{3}/i.test(o.replace(ARX, '')) ? ' artx' : '');
+    const lt = document.createElement('span'); lt.className = 'lt'; lt.textContent = 'ABCD'[i]; const tx = document.createElement('span'); tx.className = 'tx'; rich(tx, o); b.append(lt, tx); b.onclick = () => answer(i); box.appendChild(b); });
+}
+function answer(i) {
+  const q = curQ; if (!q || me.answers[q.id] !== undefined) return; const bs = [...$('qOpts').children]; bs.forEach(b => b.disabled = true);
+  const before = myScore(); me.answers[q.id] = i; const after = myScore(); const ok = i === q.a;
+  bs[q.a].classList.add('ok'); if (!ok) bs[i].classList.add('no'); sfx(ok ? 'ok' : 'no'); sendAns(q.id, i);
+  const fb = $('qFb'); fb.className = 'fb ' + (ok ? 'ok' : 'no'); fb.style.display = 'block';
+  rich(fb, (ok ? 'Benar! +' + C.SCORE.ok + ' poin. ' : 'Belum tepat. Jawaban benar: ' + 'ABCD'[q.a] + '. ') + (q.e || ''));
+  if (after.done.length > before.done.length) { refreshPosts(); burst(me.x, me.y + 2, me.z); toast('Pos ' + (quizPos + 1) + ' selesai! Bonus +' + C.SCORE.bonus, '#1FA556'); }
+  afterScore();
+  const left = posQuestions(quizPos).some(x => me.answers[x.id] === undefined); $('qNext').style.display = 'block'; $('qNext').textContent = left ? 'Lanjut' : 'Selesai';
+}
+$('qNext').onclick = () => { const left = posQuestions(quizPos).some(x => me.answers[x.id] === undefined); if (!left) { closeQuiz(); const s = myScore(); if (s.done.length === C.activePosts(BANK).length) { toast('Hebat! Semua pos sudah kamu taklukkan!', '#9B51E0'); if (MODE === 'solo') setTimeout(() => { if (phase === 'play') { phase = 'end'; soloEnd(); } }, 1500); } } else showQ(); };
+
+// ---------------- hasil siswa ----------------
+function reportHTML(rep) {
+  let h = '';
+  if (rep.strong.length) h += `<p style="margin:8px 0"><b style="color:var(--ok)">Kamu hebat di:</b> ${rep.strong.map(esc).join(', ')}</p>`;
+  if (rep.weak.length) h += `<p style="margin:8px 0"><b style="color:var(--warn)">Ayo pelajari lagi:</b> ${rep.weak.map(esc).join(', ')}${rep.weakSub.length ? ' <span class="muted">(terutama ' + rep.weakSub.map(esc).join(', ') + ')</span>' : ''}</p>`;
+  if (!h) h = '<p class="muted">Kerjakan lebih banyak pos agar terlihat kekuatanmu.</p>';
+  return h;
+}
+function soloEnd() {
+  closeQuiz(); const s = myScore(); const rep = C.studentReport(BANK, me.answers);
+  $('sresBody').innerHTML = `<h1 class="logo">Permainan <span class="a">Selesai!</span></h1><div class="medal" style="margin:12px 0">${s.score} poin</div><p class="f" style="font-size:20px">Nilai ${s.nilai} · Benar ${s.correct} dari ${s.total} soal</p>${reportHTML(rep)}`;
+  $('sresClose').textContent = 'Kembali ke Menu Utama'; $('sresClose').onclick = () => location.reload();
+  show('sres'); sfx('fanfare'); Music.setMode('victory'); if (s.nilai >= 75) confetti(120);
+}
+const StudentCer = {
+  run(m) {
+    const you = m.you || {}; const top = (m.ranking || []).slice(0, 3);
+    $('sresBody').innerHTML = `<h2 class="f" style="font-size:30px;margin:20px 0">Pengumuman juara…</h2><p class="muted">Lihat layar guru!</p>`;
+    this.busy = true; Music.stop(.4); $('sresClose').style.display = 'none'; show('sres'); sfx('drum', 2.6);
+    setTimeout(() => {
+      const rk = you.rank | 0; let h = '';
+      if (rk >= 1 && rk <= 3) {
+        h += `<div class="medal ${rk === 1 ? '' : 's' + rk}" style="margin-top:6px">JUARA ${rk}</div><h2 class="f" style="font-size:28px;margin:6px 0">${rk === 1 ? 'MasyaAllah, kamu Juara 1!' : 'Selamat, kamu Juara ' + rk + '!'}</h2>`;
+        $('sresCard').classList.add('glow'); sfx('fanfare'); confetti(rk === 1 ? 220 : 140, rk === 1 ? ['#FFC83D', '#FFF3B0', '#E3263B', '#FFFFFF'] : null);
+        try { navigator.vibrate && navigator.vibrate(rk === 1 ? [200, 80, 200, 80, 400] : [200, 80, 200]); } catch (e) { }
+      } else {
+        h += `<h1 class="logo" style="font-size:30px">Selamat untuk <span class="a">para juara!</span></h1>` + top.map((p, i) => `<div class="kv"><span>${i + 1}. ${esc(p.name)}</span><b>${p.score | 0}</b></div>`).join('');
+        h += `<p class="f" style="font-size:20px;margin-top:12px">Peringkatmu: ${rk || '-'} dari ${m.ranking ? m.ranking.length : '-'}</p><p class="muted">Tetap semangat, kamu pasti bisa lebih baik lagi!</p>`; sfx('reveal'); confetti(60);
+      }
+      h += `<p class="f" style="font-size:18px;margin-top:10px">Skor ${you.score | 0} · Nilai ${you.nilai | 0}</p>` + reportHTML(you.report || { strong: [], weak: [], weakSub: [] });
+      setTimeout(() => { Music.setMode('victory'); }, 2500);
+      $('sresBody').innerHTML = h; $('sresClose').style.display = ''; $('sresClose').textContent = 'Tutup'; $('sresClose').onclick = () => { show('sres', false); $('sresCard').classList.remove('glow'); StudentCer.busy = false; lobbyBanner(); };
+    }, 2800);
+  }
+};
+
+// ---------------- menu ☰ ----------------
+$('hudMenu').onclick = () => show('menu'); $('hostMenu').onclick = () => show('menu');
+$('mResume').onclick = () => show('menu', false);
+$('mSound').onclick = () => setMuted(!muted);
+$('mMusic').onclick = () => Music.toggle();
+$('mFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) { toast('Layar penuh tidak didukung di perangkat ini'); } };
+$('mExit').onclick = () => {
+  show('menu', false);
+  const hostLive = MODE === 'host' && [...Host.players.values()].some(p => p.online && !p.bot);
+  confirmBox('Kembali ke menu utama?', MODE === 'host' ? (hostLive ? 'Siswa yang sedang terhubung akan terputus. Hasil yang sudah ada disimpan ke riwayat Analisis.' : 'Hasil yang sudah ada disimpan ke riwayat Analisis.') : MODE === 'online' ? 'Kamu akan keluar dari permainan. Kamu bisa masuk lagi dengan nama yang sama.' : 'Progres permainan ini akan hilang.', 'Ya, keluar',
+    () => { if (MODE === 'host') Host.saveSession(true); Host.leaving = true; location.reload(); });
+};
+addEventListener('beforeunload', e => { if (MODE === 'host' && !Host.leaving && [...Host.players.values()].some(p => p.online && !p.bot)) { e.preventDefault(); e.returnValue = ''; } });
+
+// =====================================================================
+//                             BANK SOAL
+// =====================================================================
+const Bank = {
+  preset: C.presetBank(),
+  list() { const u = Store.get('kb_packages', []); return [this.preset].concat(Array.isArray(u) ? u.filter(b => b && b.id && C.validateBank(b).length === 0) : []); },
+  saveUser(arr) { return Store.set('kb_packages', arr.filter(b => !b.builtin)); },
+  get(id) { return this.list().find(b => b.id === id); },
+  active() { return this.get(Store.get('kb_active', this.preset.id)) || this.preset; },
+  setActive(id) { Store.set('kb_active', id); },
+  upsert(b) { const l = this.list().filter(x => !x.builtin); const i = l.findIndex(x => x.id === b.id); if (i >= 0) l[i] = b; else l.push(b); return this.saveUser(l); },
+  remove(id) { this.saveUser(this.list().filter(x => !x.builtin && x.id !== id)); if (Store.get('kb_active') === id) this.setActive(this.preset.id); },
+  newId: () => 'pk' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)
+};
+const XL = window.XLSX;
+function writeXlsx(sheets, name) {
+  if (!XL) { toast('Modul Excel belum termuat. Periksa internet lalu muat ulang.', '#C0392B'); return; }
+  const wb = XL.utils.book_new();
+  for (const s of sheets) { const ws = XL.utils.aoa_to_sheet(s.aoa); if (s.cols) ws['!cols'] = s.cols.map(w => ({ wch: w })); XL.utils.book_append_sheet(wb, ws, s.name.slice(0, 31)); }
+  const out = XL.write(wb, { bookType: 'xlsx', type: 'array' }); download(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name);
+}
+const safeName = s => String(s).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_').slice(0, 50) || 'file';
+let bankView = { mode: 'list', pkg: null, imp: null };
+$('hBank').onclick = () => { bankView = { mode: 'list' }; renderBank(); show('bank'); };
+$('bankBack').onclick = () => { if (bankView.mode !== 'list') { bankView = { mode: 'list' }; renderBank(); } else show('bank', false); };
+function renderBank() {
+  const body = $('bankBody'); const act = Bank.active(); $('bankActive').textContent = 'Aktif: ' + act.name;
+  $('bankBack').textContent = bankView.mode === 'list' ? '← Kembali' : '← Daftar Paket';
+  if (bankView.mode === 'import') return renderImport(body);
+  if (bankView.mode === 'edit') return renderEditor(body);
+  let h = '';
+  if (!Store.ok) h += `<p class="err">Penyimpanan browser tidak tersedia: paket baru hilang setelah halaman ditutup. Gunakan "Cadangkan semua".</p>`;
+  if (Host.phase === 'play') h += `<p class="err">Permainan sedang berlangsung. Paket aktif tidak bisa diganti sampai permainan selesai.</p>`;
+  h += `<div class="sec" style="margin-top:0">Daftar paket soal</div>`;
+  for (const b of Bank.list()) {
+    const ap = C.activePosts(b); const isAct = b.id === act.id;
+    h += `<div class="pk ${isAct ? 'act' : ''}"><div class="nm">${esc(b.name)}<div class="muted">${b.questions.length} soal · ${ap.length} pos · ${[...new Set(b.questions.map(q => q.materi))].length} materi${isAct ? ' · <b style="color:var(--gold)">AKTIF</b>' : ''}</div></div>
+      <div class="row" style="flex:none;gap:6px">${isAct ? '' : `<button class="b-green b-sm" data-use="${esc(b.id)}">Gunakan</button>`}
+      <button class="b-glass b-sm" data-edit="${esc(b.id)}">${b.builtin ? 'Lihat' : 'Lihat / Sunting'}</button>
+      <button class="b-glass b-sm" data-xl="${esc(b.id)}">Unduh Excel</button><button class="b-glass b-sm" data-dup="${esc(b.id)}">Duplikat</button>
+      ${b.builtin ? '' : `<button class="b-glass b-sm" data-del="${esc(b.id)}">Hapus</button>`}</div></div>`;
+  }
+  h += `<div class="sec">Tambah paket baru (mata pelajaran lain)</div>
+    <p class="muted">1) Unduh template → 2) isi di Excel/Google Sheets → 3) unggah file atau salin-tempel tabelnya.</p>
+    <div class="row" style="max-width:900px"><button class="b-gold" id="bkTpl">Unduh Template Kosong</button><button class="b-blue" id="bkUp">Unggah File Excel/CSV</button><button class="b-glass" id="bkPaste">Tempel dari Excel</button><button class="b-glass" id="bkNew">Buat Paket Kosong</button></div>
+    <div id="pasteBox" style="display:none;margin-top:10px"><label for="pasteTa">Salin baris tabel dari Excel/Google Sheets (boleh dengan judul kolom), lalu tempel di sini:</label><textarea id="pasteTa" style="min-height:140px" placeholder="Pos&#9;Materi&#9;Sub-materi&#9;Soal&#9;A&#9;B&#9;C&#9;D&#9;Kunci&#9;Pembahasan"></textarea><button class="b-green" id="pasteGo" style="margin-top:8px">Periksa Soal</button></div>
+    <div class="sec">Cadangan</div><p class="muted">Simpan semua paket dan riwayat ke satu file, untuk dipindahkan ke laptop lain atau berjaga-jaga jika data browser terhapus.</p>
+    <div class="row" style="max-width:600px"><button class="b-glass" id="bkBackup">Cadangkan semua</button><button class="b-glass" id="bkRestore">Pulihkan dari file</button></div>`;
+  body.innerHTML = h;
+  body.querySelectorAll('[data-use]').forEach(b => b.onclick = () => { if (Host.phase === 'play') return toast('Tunggu permainan selesai dulu'); Bank.setActive(b.dataset.use); Host.applyBank(); renderBank(); toast('Paket diaktifkan', '#1FA556'); });
+  body.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { bankView = { mode: 'edit', pkg: JSON.parse(JSON.stringify(Bank.get(b.dataset.edit))) }; renderBank(); });
+  body.querySelectorAll('[data-xl]').forEach(b => b.onclick = () => { const p = Bank.get(b.dataset.xl); writeXlsx(C.templateSheets(p), 'Soal_' + safeName(p.name) + '.xlsx'); });
+  body.querySelectorAll('[data-dup]').forEach(b => b.onclick = () => { const p = JSON.parse(JSON.stringify(Bank.get(b.dataset.dup))); p.id = Bank.newId(); p.builtin = false; p.name = (p.name.replace(' (bawaan)', '') + ' (salinan)').slice(0, 80); if (Bank.upsert(p)) { toast('Paket diduplikat. Silakan sunting.', '#1FA556'); renderBank(); } });
+  body.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const p = Bank.get(b.dataset.del); confirmBox('Hapus paket?', '"' + p.name + '" akan dihapus permanen dari laptop ini.', 'Hapus', () => { const wasAct = Bank.active().id === p.id; Bank.remove(p.id); if (wasAct) Host.applyBank(); renderBank(); }); });
+  $('bkTpl').onclick = () => writeXlsx(C.templateSheets(null), 'Template_Soal_Kampung_Belajar.xlsx');
+  $('bkUp').onclick = () => { $('fileXlsx').value = ''; $('fileXlsx').click(); };
+  $('bkPaste').onclick = () => { $('pasteBox').style.display = 'block'; $('pasteTa').focus(); };
+  $('pasteGo').onclick = () => startImport(C.parseTSV($('pasteTa').value), 'Paket tempel');
+  $('bkNew').onclick = () => { bankView = { mode: 'edit', pkg: { id: Bank.newId(), name: 'Paket Baru', builtin: false, questions: [] }, fresh: true }; renderBank(); };
+  $('bkBackup').onclick = () => download(new Blob([JSON.stringify({ app: 'kampung-belajar-3d', v: 1, packages: Bank.list().filter(b => !b.builtin), sessions: Store.get('kb_sessions', []) })], { type: 'application/json' }), 'Cadangan_Kampung_Belajar.json');
+  $('bkRestore').onclick = () => { $('fileJson').value = ''; $('fileJson').click(); };
+}
+$('fileXlsx').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    if (!XL) throw new Error('Modul Excel belum termuat (periksa internet).');
+    const wb = XL.read(await f.arrayBuffer(), { type: 'array' });
+    const sn = wb.SheetNames.find(n => /^soal$/i.test(n.trim())) || wb.SheetNames[0];
+    const rows = XL.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: '', raw: false, blankrows: false });
+    startImport(rows, f.name.replace(/\.(xlsx|xls|csv)$/i, ''));
+  } catch (err) { toast('Gagal membaca file: ' + err.message, '#C0392B'); }
+};
+$('fileJson').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text()); if (!d || d.app !== 'kampung-belajar-3d') throw new Error('Bukan file cadangan Kampung Belajar');
+    let n = 0; const cur = Bank.list().filter(b => !b.builtin);
+    for (const p of d.packages || []) { const b = C.sanitizeBank(p); b.builtin = false; if (!b.id) b.id = Bank.newId(); if (C.validateBank(b).length) continue; const i = cur.findIndex(x => x.id === b.id); if (i >= 0) cur[i] = b; else cur.push(b); n++; }
+    Bank.saveUser(cur);
+    const ss = Store.get('kb_sessions', []); const ids = new Set(ss.map(s => s.id)); let k = 0; for (const s of d.sessions || []) if (s && s.id && !ids.has(s.id) && s.bank && Array.isArray(s.players)) { ss.push(s); k++; }
+    ss.sort((a, b) => a.id - b.id); Store.set('kb_sessions', ss.slice(-40));
+    toast(`Dipulihkan: ${n} paket, ${k} sesi`, '#1FA556'); renderBank();
+  } catch (err) { toast('Gagal memulihkan: ' + err.message, '#C0392B'); }
+};
+function startImport(rows, name) { const r = C.importRows(rows); bankView = { mode: 'import', imp: r, name: name || 'Paket baru' }; renderBank(); }
+function renderImport(body) {
+  const r = bankView.imp; const ap = C.activePosts({ questions: r.questions });
+  let h = `<div class="sec" style="margin-top:0">Hasil pemeriksaan</div>
+    <p style="font-weight:900"><span style="color:var(--ok)">${r.questions.length} soal siap</span> · <span style="color:${r.errors.length ? 'var(--bad)' : 'var(--muted)'}">${r.errors.length} baris bermasalah (tidak dimasukkan)</span> · ${r.warnings.length} peringatan</p>`;
+  if (r.errors.length) h += `<div class="panel" style="padding:10px;max-height:200px;overflow:auto;background:rgba(255,90,106,.12)">${r.errors.map(e => `<div>Baris ${e.row}: ${esc(e.msg)}</div>`).join('')}</div>`;
+  if (r.warnings.length) h += `<details style="margin-top:8px"><summary class="muted">Lihat peringatan</summary>${r.warnings.map(e => `<div class="muted">Baris ${e.row}: ${esc(e.msg)}</div>`).join('')}</details>`;
+  if (ap.length) h += `<div class="sec">Sebaran soal per pos</div><div class="row" style="gap:6px">${ap.map(a => `<span class="panel" style="flex:none;padding:6px 10px;font-size:13px;font-weight:800">${a.pos + 1}. ${esc(POSTS[a.pos].name)}: ${a.count} soal</span>`).join('')}</div>`;
+  h += `<label for="impName">Nama paket</label><input id="impName" maxlength="80" value="${esc(bankView.name)}" style="max-width:500px">
+    <div class="row" style="margin-top:12px;max-width:600px"><button class="b-glass" id="impCancel">Batal</button><button class="b-green" id="impSave" ${r.questions.length ? '' : 'disabled'}>Simpan Paket</button><button class="b-gold" id="impSaveUse" ${r.questions.length && Host.phase !== 'play' ? '' : 'disabled'}>Simpan &amp; Gunakan</button></div>`;
+  body.innerHTML = h;
+  $('impCancel').onclick = () => { bankView = { mode: 'list' }; renderBank(); };
+  const save = use => { const b = { id: Bank.newId(), name: ($('impName').value.trim() || 'Paket baru').slice(0, 80), builtin: false, questions: r.questions };
+    if (C.validateBank(b).length) return toast('Paket tidak valid', '#C0392B'); if (!Bank.upsert(b)) return;
+    if (use) { Bank.setActive(b.id); Host.applyBank(); } toast('Paket disimpan', '#1FA556'); bankView = { mode: 'list' }; renderBank(); };
+  $('impSave').onclick = () => save(false); $('impSaveUse').onclick = () => save(true);
+}
+function renderEditor(body) {
+  const p = bankView.pkg; const ro = p.builtin;
+  let h = `<div class="row" style="align-items:flex-end;max-width:900px"><div style="flex:2"><label for="edName">Nama paket</label><input id="edName" maxlength="80" value="${esc(p.name)}" ${ro ? 'disabled' : ''}></div>
+    ${ro ? '<div class="muted" style="flex:2">Paket bawaan hanya bisa dilihat. Tekan Duplikat di daftar paket untuk membuat salinan yang bisa disunting.</div>' : '<button class="b-green" id="edSave" style="flex:none">Simpan Paket</button><button class="b-blue" id="edAdd" style="flex:none">+ Tambah Soal</button>'}</div>`;
+  const byPos = C.byPos(p);
+  if (!p.questions.length) h += '<p class="muted" style="margin-top:14px">Belum ada soal. Tekan "+ Tambah Soal".</p>';
+  for (const pos of Object.keys(byPos).map(Number).sort((a, b) => a - b)) {
+    h += `<div class="sec">Pos ${pos + 1} · ${esc(POSTS[pos].name)} <span class="muted">(${byPos[pos].length} soal)</span></div>`;
+    for (const q of byPos[pos]) h += `<div class="qrow"><div class="t"><div class="muted" style="font-size:12px">${esc(q.materi)} · ${esc(q.sub)}</div><div style="font-weight:800">${richHTML(q.q)}</div>
+      <div style="font-size:13px">${q.o.map((o, i) => `<span style="${i === q.a ? 'color:var(--ok);font-weight:900' : ''}">${'ABCD'[i]}. ${richHTML(o)}</span>`).join(' &nbsp; ')}</div></div>
+      ${ro ? '' : `<div class="row" style="flex:none;gap:6px"><button class="b-glass b-sm" data-qe="${esc(q.id)}">Ubah</button><button class="b-glass b-sm" data-qd="${esc(q.id)}">Hapus</button></div>`}</div>`;
+  }
+  body.innerHTML = h;
+  if (ro) return;
+  $('edAdd').onclick = () => openQForm(null);
+  $('edSave').onclick = () => { p.name = ($('edName').value.trim() || 'Paket').slice(0, 80); const errs = C.validateBank(p); if (errs.length) return toast(errs[0], '#C0392B'); if (!Bank.upsert(p)) return;
+    if (Bank.active().id === p.id) Host.applyBank(); toast('Paket disimpan', '#1FA556'); bankView = { mode: 'list' }; renderBank(); };
+  body.querySelectorAll('[data-qe]').forEach(b => b.onclick = () => openQForm(p.questions.find(q => q.id === b.dataset.qe)));
+  body.querySelectorAll('[data-qd]').forEach(b => b.onclick = () => { p.questions = p.questions.filter(q => q.id !== b.dataset.qd); p.name = $('edName').value; renderBank(); });
+}
+let qfEditing = null;
+function openQForm(q) {
+  const p = bankView.pkg; qfEditing = q; p.name = $('edName').value;
+  $('qfTitle').textContent = q ? 'Ubah Soal' : 'Tambah Soal';
+  $('qfPos').innerHTML = POSTS.map(x => `<option value="${x.id}">${x.id + 1}. ${esc(x.name)}</option>`).join('');
+  $('matList').innerHTML = [...new Set(p.questions.map(x => x.materi))].map(m => `<option value="${esc(m)}">`).join('');
+  $('qfPos').value = q ? q.pos : (p.questions.length ? p.questions[p.questions.length - 1].pos : 0);
+  $('qfMat').value = q ? q.materi : (p.questions.length ? p.questions[p.questions.length - 1].materi : ''); $('qfSub').value = q ? q.sub : '';
+  $('qfQ').value = q ? q.q : ''; ['A', 'B', 'C', 'D'].forEach((L, i) => $('qf' + L).value = q ? (q.o[i] || '') : ''); $('qfKey').value = q ? 'ABCD'[q.a] : 'A'; $('qfE').value = q ? q.e : ''; $('qfErr').textContent = '';
+  show('qform'); setTimeout(() => $('qfQ').focus(), 50);
+}
+$('qfBack').onclick = () => show('qform', false);
+$('qfForm').onsubmit = e => {
+  e.preventDefault(); const p = bankView.pkg;
+  const row = [String(+$('qfPos').value + 1), $('qfMat').value, $('qfSub').value, $('qfQ').value, $('qfA').value, $('qfB').value, $('qfC').value, $('qfD').value, $('qfKey').value, $('qfE').value];
+  const r = C.importRows([row]); if (r.errors.length) return $('qfErr').textContent = r.errors[0].msg;
+  const nq = r.questions[0];
+  const sameFull = p.questions.filter(x => x.pos === nq.pos && (!qfEditing || x.id !== qfEditing.id)).length >= C.MAX_PER_POS; if (sameFull) return $('qfErr').textContent = 'Pos ini sudah berisi ' + C.MAX_PER_POS + ' soal.';
+  if (qfEditing) { nq.id = qfEditing.id; p.questions[p.questions.findIndex(x => x.id === qfEditing.id)] = nq; }
+  else { if (p.questions.length >= C.MAX_Q) return $('qfErr').textContent = 'Batas ' + C.MAX_Q + ' soal tercapai.'; let k = p.questions.length + 1; while (p.questions.some(x => x.id === 'q' + k)) k++; nq.id = 'q' + k; p.questions.push(nq); }
+  show('qform', false); renderBank(); toast('Soal tersimpan sementara. Tekan "Simpan Paket".', '#1D63D6');
+};
+
+// =====================================================================
+//                                 GURU
+// =====================================================================
+const Host = {
+  players: new Map(), conns: new Map(), phase: 'lobby', dur: Store.get('kb_dur', 20 * 60), endsAt: 0, code: '', bots: [], bank: null, leaving: false,
+  camYaw: 0, camPitch: 1.0, camDist: 215, sessionId: 0, cer: null,
+  start() {
+    $('hostUI').classList.add('on'); $('hUrl').textContent = location.host || 'alamat game ini';
+    $('hKelas').value = Store.get('kb_kelas', ''); $('hKelas').oninput = () => Store.set('kb_kelas', $('hKelas').value.trim());
+    scene.fog.near = 260; scene.fog.far = 520; camera.fov = 45; camera.updateProjectionMatrix();
+    sc.left = -120; sc.right = 120; sc.top = 100; sc.bottom = -100; sc.updateProjectionMatrix(); sun.position.set(50, 120, 60); sun.target.position.set(0, 0, -10);
+    W.signScale(2.6); for (const c of W.clouds) c.visible = false; this.bank = Bank.active(); this.setPhase('lobby'); this.refreshPosts();
+    if (typeof Peer === 'undefined') { $('hErr').textContent = 'Tidak ada internet: siswa belum bisa masuk. Mode demo tetap bisa dipakai.'; $('hCode').textContent = '----'; } else this.openPeer();
+    setInterval(() => this.tick(), 1000); setInterval(() => this.sendPos(), 125);
+  },
+  openPeer() {
+    this.code = String(Math.floor(1000 + Math.random() * 9000)); peer = new Peer(PEER_PREFIX + this.code);
+    peer.on('open', () => { $('hCode').textContent = this.code; $('hErr').textContent = ''; });
+    peer.on('disconnected', () => { $('hErr').textContent = 'Koneksi server terputus, menyambung ulang…'; setTimeout(() => { try { peer.reconnect(); } catch (e) { } }, 1500); });
+    peer.on('error', err => { if (err.type === 'unavailable-id') { peer.destroy(); this.openPeer(); } else if (err.type !== 'peer-unavailable') $('hErr').textContent = 'Koneksi bermasalah: ' + err.type; });
+    peer.on('connection', c => {
+      c.on('data', m => { try { this.onMsg(c, m); } catch (e) { console.error(e); } });
+      c.on('close', () => { const sid = this.conns.get(c.peer); this.conns.delete(c.peer); const p = sid && this.players.get(sid); if (p && p.conn === c) { p.online = false; p.conn = null; if (p.av) p.av.visible = false; } });
+    });
+  },
+  onMsg(c, m) {
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'hello') {
+      const name = String(m.name || 'Siswa').replace(/\s+/g, ' ').trim().slice(0, 12) || 'Siswa'; const sid = String(m.sid || c.peer).slice(0, 24);
+      let p = this.players.get(sid);
+      if (!p) { for (const q of this.players.values()) if (!q.online && !q.bot && q.name.toLowerCase() === name.toLowerCase()) { p = q; this.players.delete(q.sid); p.sid = sid; this.players.set(sid, p); break; } }
+      if (!p) { p = { sid, name, answers: {}, coins: 0, star: false, x: W.spawn[0] + (Math.random() * 8 - 4), y: 0, z: W.spawn[1], r: Math.PI, s: 0, a: 0 }; this.players.set(sid, p); toast(name + ' bergabung', '#1D63D6'); sfx('coin'); }
+      else toast(name + ' tersambung kembali', '#1D63D6');
+      p.name = name; p.shirt = SHIRTS.includes(m.shirt) ? m.shirt : SHIRTS[0]; p.hair = HAIRS.includes(m.hair) ? m.hair : HAIRS[0];
+      if (p.conn && p.conn !== c) { try { p.conn.close(); } catch (e) { } }
+      p.conn = c; p.online = true; this.conns.set(c.peer, sid);
+      if (!p.av) { p.av = makeAvatar(p.shirt, p.hair, p.name, false); p.av.scale.setScalar(3); p.cx = p.x; p.cy = 0; p.cz = p.z; p.cr = p.r; }
+      p.av.visible = !this.cer;
+      c.send({ t: 'welcome', bank: this.bank, phase: this.phase, remaining: this.remaining(), resume: { answers: p.answers, coins: p.coins, star: p.star } });
+      this.sendRoster(); return;
+    }
+    const sid = this.conns.get(c.peer); const p = sid && this.players.get(sid); if (!p) return;
+    if (m.t === 'st') { p.x = clampN(m.x, -110, 110); p.y = clampN(m.y, 0, 20); p.z = clampN(m.z, -95, 85); p.r = +m.r || 0; p.s = clampN(m.s, 0, 15); p.a = m.a ? 1 : 0; }
+    else if (m.t === 'ans') { if (this.phase !== 'play') return; const q = this.bank.questions.find(x => x.id === m.qid); const ch = m.c | 0; if (q && p.answers[q.id] === undefined && ch >= 0 && ch < q.o.length) { p.answers[q.id] = ch; this.checkAllDone(); } }
+    else if (m.t === 'extra') { if (this.phase !== 'play') return; p.coins = Math.max(p.coins, Math.min(40, m.coins | 0)); p.star = p.star || !!m.star; }
+  },
+  remaining() { return this.phase === 'play' ? Math.max(0, (this.endsAt - Date.now()) / 1000) : this.dur; },
+  scoreOf(p) { return C.scoreOf(this.bank, p.answers, p.coins, p.star); },
+  list() { return [...this.players.values()].map(p => { const s = this.scoreOf(p); return { id: p.sid, name: p.name, shirt: p.shirt, hair: p.hair, score: s.score, done: s.done.length, answered: s.answered, online: !!p.online, bot: !!p.bot }; }); },
+  sendRoster() { const pl = this.list().filter(p => p.online); const msg = { t: 'roster', phase: this.phase, remaining: this.remaining(), players: pl }; for (const p of this.players.values()) if (p.conn && p.conn.open) try { p.conn.send(msg); } catch (e) { } },
+  sendPos() { if (!this.conns.size) return; const d = []; for (const p of this.players.values()) if (p.online) d.push(p.sid, +p.x.toFixed(1), +p.z.toFixed(1), +p.y.toFixed(1), +p.r.toFixed(2), +(+p.s).toFixed(1), p.a | 0); const msg = { t: 'p', d }; for (const p of this.players.values()) if (p.conn && p.conn.open) try { p.conn.send(msg); } catch (e) { } },
+  tick() { if (this.phase === 'play' && this.remaining() <= 0) this.end(); if (this.phase === 'play' && this.remaining() < 60 && Music.mode === 'play') Music.setMode('hurry'); this.sendRoster(); $('hTime').textContent = fmt(this.remaining()); this.renderList(); },
+  renderList() {
+    const s = this.list().sort((a, b) => b.score - a.score); const act = C.activePosts(this.bank).length || 1; $('hCount').textContent = s.filter(p => p.online).length + ' siswa';
+    const html = s.map((p, i) => `<li style="${p.online ? '' : 'opacity:.45'}"><span>${i + 1}</span><span class="dot" style="background:${esc(p.shirt)}"></span><span class="nm">${esc(p.name)}${p.bot ? ' <span class="muted">(demo)</span>' : ''}</span><span class="pg" title="${p.done}/${act} pos"><i style="width:${p.done / act * 100}%"></i></span><span class="muted" style="font-size:11px;min-width:34px">${p.done}/${act}</span><span class="s">${p.score}</span></li>`).join('') || '<li class="muted">Belum ada siswa. Tunjukkan kode di kiri.</li>';
+    if (html !== this._lh) { $('hList').innerHTML = html; this._lh = html; }
+  },
+  setPhase(ph) {
+    this.phase = ph; const el = $('hPhase');
+    el.textContent = { lobby: 'Menunggu instruksi guru', play: 'Permainan berlangsung', end: 'Permainan selesai' }[ph]; el.style.color = { lobby: '#FFC83D', play: '#3FD97E', end: '#FF7A88' }[ph];
+    $('hStart').style.display = ph === 'play' ? 'none' : ''; $('hStop').style.display = ph === 'play' ? '' : 'none'; $('hStart').textContent = ph === 'end' ? 'Main Lagi' : 'Mulai';
+    $('hPkg').textContent = this.bank.name; $('hTime').textContent = fmt(this.remaining()); this.sendRoster(); if (!this.cer) Music.setMode(ph === 'play' ? 'play' : 'lobby');
+  },
+  refreshPosts() { W.setPosts(C.activePosts(this.bank).map(a => ({ pos: a.pos, title: 'POS ' + (a.pos + 1) + ' · ' + POSTS[a.pos].name, sub: a.materi.join(' / '), state: this.phase === 'play' ? 'open' : 'locked' }))); },
+  applyBank() {
+    if (MODE !== 'host') return; this.bank = Bank.active();
+    for (const p of this.players.values()) { p.answers = {}; p.coins = 0; p.star = false; }
+    this.sessionId = 0; this.refreshPosts(); this.setPhase(this.phase === 'end' ? 'lobby' : this.phase);
+    for (const p of this.players.values()) if (p.conn && p.conn.open) p.conn.send({ t: 'welcome', bank: this.bank, phase: this.phase, remaining: this.remaining(), resume: null });
+  },
+  checkAllDone() {
+    const pl = [...this.players.values()].filter(p => p.online); if (!pl.length || this.phase !== 'play') return; const n = C.activePosts(this.bank).length;
+    if (pl.every(p => this.scoreOf(p).done.length >= n)) { toast('Semua siswa sudah menyelesaikan semua pos!', '#1FA556'); setTimeout(() => { if (this.phase === 'play') this.end(); }, 2500); }
+  },
+  begin() {
+    if (this.phase === 'end') { for (const p of this.players.values()) { p.answers = {}; p.coins = 0; p.star = false; if (p.bot) { p.bot.t = null; p.bot.q = []; } } for (const p of this.players.values()) if (p.conn && p.conn.open) p.conn.send({ t: 'reset' }); }
+    this.sessionId = 0; this.endsAt = Date.now() + this.dur * 1000; this.setPhase('play'); this.refreshPosts(); sfx('star');
+  },
+  end() {
+    if (this.phase !== 'play') return; this.setPhase('end'); this.refreshPosts(); this.saveSession(false);
+    const st = C.stats(this.bank, this.sessionPlayers()); const rank = [...st.students].sort((a, b) => b.score - a.score || b.correct - a.correct);
+    const ranking = rank.map(s => { const p = this.players.get(s.sid) || {}; return { id: s.sid, name: s.name, score: s.score, shirt: p.shirt, hair: p.hair }; });
+    for (const p of this.players.values()) if (p.conn && p.conn.open) {
+      const i = rank.findIndex(s => s.sid === p.sid); const s = rank[i] || {};
+      p.conn.send({ t: 'ceremony', ranking: ranking.map(r => ({ name: r.name, score: r.score })), you: { rank: i + 1, score: s.score | 0, nilai: s.nilai | 0, report: C.studentReport(this.bank, p.answers) } });
+    }
+    Cer.start(ranking);
+  },
+  sessionPlayers() { return [...this.players.values()].filter(p => Object.keys(p.answers).length || p.coins || p.star).map(p => ({ sid: p.sid, name: p.name, answers: Object.assign({}, p.answers), coins: p.coins, star: p.star, demo: !!p.bot })); },
+  saveSession(partial) {
+    const players = this.sessionPlayers(); if (!players.length) return;
+    const ss = Store.get('kb_sessions', []); if (!this.sessionId) this.sessionId = Date.now();
+    const sess = { id: this.sessionId, date: new Date(this.sessionId).toISOString(), kelas: $('hKelas').value.trim(), bank: this.bank, players, partial: !!partial, demo: players.some(p => p.demo) };
+    const i = ss.findIndex(s => s.id === sess.id); if (i >= 0) ss[i] = sess; else ss.push(sess);
+    Store.set('kb_sessions', ss.slice(-40));
+  },
+  // siswa demo
+  addBots() {
+    const names = ['Aisyah', 'Fajar', 'Nurul', 'Rizky', 'Dimas', 'Salsa', 'Rahmat', 'Putri', 'Ilham', 'Zahra', 'Rafi', 'Nabila'];
+    for (let k = 0; k < 4; k++) {
+      const i = this.bots.length; if (i >= names.length) { toast('Siswa demo sudah maksimal'); break; }
+      const skill = {}; for (const m of new Set(this.bank.questions.map(q => q.materi))) skill[m] = .35 + Math.random() * .6;
+      const p = { sid: 'bot' + i, name: names[i], shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[i % HAIRS.length], answers: {}, coins: 0, star: false, online: true, x: W.spawn[0] + (Math.random() * 10 - 5), y: 0, z: W.spawn[1] + Math.random() * 4, r: Math.PI, s: 0, a: 0, bot: { t: null, wait: Math.random() * 2, q: [], skill } };
+      p.av = makeAvatar(p.shirt, p.hair, p.name, false); p.av.scale.setScalar(3); p.cx = p.x; p.cy = 0; p.cz = p.z; p.cr = p.r; p.av.visible = !this.cer;
+      this.players.set(p.sid, p); this.bots.push(p);
+    }
+    toast('Siswa demo ditambahkan', '#1D63D6'); this.renderList();
+  },
+  stepBots(dt) {
+    const act = C.activePosts(this.bank);
+    for (const p of this.bots) {
+      const b = p.bot; if (b.wait > 0) { b.wait -= dt; p.s = 0; continue; }
+      if (b.q.length) { // sedang menjawab soal
+        if (this.phase === 'play') { const q = b.q.shift(); const sk = b.skill[q.materi] || .6; const wrong = q.o.map((_, i) => i).filter(i => i !== q.a); p.answers[q.id] = Math.random() < sk ? q.a : (Math.random() < .7 ? wrong[0] : wrong[Math.floor(Math.random() * wrong.length)]); this.checkAllDone(); }
+        else b.q = [];
+        b.wait = .8 + Math.random(); continue;
+      }
+      if (!b.t) { const todo = act.filter(a => !this.scoreOf(p).done.includes(a.pos)); const pick = this.phase === 'play' && todo.length ? todo[Math.floor(Math.random() * todo.length)] : null;
+        if (pick) { const [x, z] = W.spotOf(pick.pos); b.t = { x, z, pos: pick.pos }; } else b.t = { x: (Math.random() * 2 - 1) * 70, z: [-40, 0, 40][Math.floor(Math.random() * 3)] }; }
+      const dx = b.t.x - p.x, dz = b.t.z - p.z, d = Math.hypot(dx, dz);
+      if (d < .8) { if (b.t.pos !== undefined && this.phase === 'play') b.q = this.bank.questions.filter(q => q.pos === b.t.pos && p.answers[q.id] === undefined); b.t = null; p.s = 0; b.wait = .5; continue; }
+      const sp = 7; p.x += dx / d * sp * dt; p.z += dz / d * sp * dt; p.r = Math.atan2(dx, dz); p.s = sp;
+      if (this.phase === 'play' && p.coins < 40 && Math.random() < dt * .25) p.coins++;
+    }
+  },
+  stepAvatars(dt, t) {
+    const k = 1 - Math.exp(-12 * dt);
+    for (const p of this.players.values()) { if (!p.av || !p.online) continue; p.cx += (p.x - p.cx) * k; p.cy += (p.y - p.cy) * k; p.cz += (p.z - p.cz) * k; let d = p.r - p.cr; d = Math.atan2(Math.sin(d), Math.cos(d)); p.cr += d * k; p.av.position.set(p.cx, p.cy, p.cz); p.av.rotation.y = p.cr; animAvatar(p.av, p.s, !!p.a, t, dt); }
+  },
+  camTick(t) { const a = this.camYaw + Math.sin(t * .05) * .08; const r = this.camDist; camera.position.set(Math.sin(a) * r * Math.cos(this.camPitch), r * Math.sin(this.camPitch), -10 + Math.cos(a) * r * Math.cos(this.camPitch)); camera.lookAt(0, 0, -6); }
+};
+const clampN = (v, a, b) => Math.max(a, Math.min(b, +v || 0));
+$('hStart').onclick = () => { if (Host.phase === 'end' && Host.cer) return; Host.begin(); };
+$('hStop').onclick = () => confirmBox('Akhiri permainan sekarang?', 'Hasil akan disimpan dan upacara juara dimulai.', 'Akhiri', () => { Host.endsAt = Date.now(); Host.end(); });
+$('hPlus').onclick = () => { if (Host.phase === 'play') Host.endsAt += 300000; else { Host.dur = Math.min(3600, Host.dur + 300); Store.set('kb_dur', Host.dur); } $('hTime').textContent = fmt(Host.remaining()); };
+$('hMinus').onclick = () => { if (Host.phase === 'play') Host.endsAt = Math.max(Date.now() + 30000, Host.endsAt - 300000); else { Host.dur = Math.max(300, Host.dur - 300); Store.set('kb_dur', Host.dur); } $('hTime').textContent = fmt(Host.remaining()); };
+$('hDemo').onclick = () => Host.addBots();
+
+// =====================================================================
+//                         UPACARA JUARA (layar guru)
+// =====================================================================
+const Cer = {
+  start(ranking) {
+    show('menu', false); show('bank', false); show('ana', false);
+    const top = ranking.slice(0, 3);
+    if (!top.length) { this.showFinal(ranking); return; }
+    const c = Host.cer = { t: 0, ranking, top, avs: [], objs: [], step: 0, fw: 0, conf: [] };
+    for (const p of Host.players.values()) if (p.av) p.av.visible = false;
+    for (const id in W.markers) { const mk = W.markers[id]; mk.ring.visible = mk.beam.visible = false; if (mk.sign) mk.sign.visible = false; }
+    c.saved = { bg: scene.background.clone(), fog: scene.fog.color.clone(), hemi: hemi.intensity, sun: sun.intensity, fn: scene.fog.near, ff: scene.fog.far };
+    scene.background.set('#1A2340'); scene.fog.color.set('#1A2340'); scene.fog.near = 120; scene.fog.far = 400; hemi.intensity = .4; sun.intensity = .35;
+    const pc = W.podiumCenter; const face = pc.face; c.face = face;
+    top.forEach((r, i) => { const pd = W.podium[i]; const av = makeAvatar(r.shirt || SHIRTS[i], r.hair || HAIRS[0], r.name, false); av.scale.setScalar(1.25); av.position.set(pd.x, pd.top + 30, pd.z); av.rotation.y = face > 0 ? 0 : Math.PI; av.visible = false; av.userData.pd = pd; c.avs.push(av); });
+    const spot = new T.SpotLight('#FFF1C2', 3, 60, .32, .5, 1); const p1 = W.podium[0]; spot.position.set(p1.x, 24, p1.z + face * 10); spot.target.position.set(p1.x, p1.top, p1.z); spot.visible = false; scene.add(spot, spot.target); c.spot = spot; c.objs.push(spot, spot.target);
+    // piala
+    const tro = new T.Group(); const gold = new T.MeshLambertMaterial({ color: '#FFC83D', emissive: '#7A5A00' });
+    const cup = new T.Mesh(new T.CylinderGeometry(.9, .45, 1.3, 16, 1, true), gold); cup.material.side = T.DoubleSide; cup.position.y = 1.9; tro.add(cup);
+    for (const s of [-1, 1]) { const h = new T.Mesh(new T.TorusGeometry(.38, .09, 6, 12, Math.PI), gold); h.position.set(s * .95, 1.95, 0); h.rotation.z = s > 0 ? -Math.PI / 2 : Math.PI / 2; tro.add(h); }
+    const stem = new T.Mesh(new T.CylinderGeometry(.14, .2, .7, 8), gold); stem.position.y = 1; tro.add(stem); const base = new T.Mesh(new T.BoxGeometry(1.1, .5, 1.1), M('#5A3215')); base.position.y = .45; tro.add(base);
+    tro.position.set(p1.x + (W.podium[2].x - p1.x) * .55, .3, p1.z + face * 2.8); tro.scale.setScalar(.01); tro.visible = false; scene.add(tro); c.trophy = tro; c.objs.push(tro);
+    Music.stop(.5); $('hostUI').style.display = 'none'; $('cer').classList.add('on'); this.text('Siapakah juaranya…?', true); sfx('drum', 2.6);
+    c.timeline = [[2.8, () => this.reveal(2)], [5.8, () => this.reveal(1)], [8.6, () => { this.text('Dan Juara 1 adalah…', true); sfx('drum', 2.2); }], [11, () => this.reveal(0)], [19, () => this.showFinal(ranking)]];
+  },
+  text(t, pop, name, color) { const e = $('cerText'); e.innerHTML = esc(t) + (name ? `<span class="nmx" style="color:${color || 'var(--gold)'}">${esc(name)}</span>` : ''); e.classList.remove('pop'); void e.offsetWidth; if (pop) e.classList.add('pop'); },
+  reveal(i) {
+    const c = Host.cer; const av = c.avs[i]; if (!av) return; av.visible = true; av.userData.drop = 0;
+    const cols = [['#FFC83D', '#FFF3B0', '#FFFFFF'], ['#C9D2DC', '#FFFFFF', '#8E9AA8'], ['#D08A4A', '#FFE2C4', '#9A5A24']][i];
+    if (i === 0) { addCrown(av); c.spot.visible = true; c.trophy.visible = true; c.fw = 8; this.text('MasyaAllah! JUARA 1', true, c.top[0].name); sfx('fanfare'); confetti(160); }
+    else { this.text('JUARA ' + (i + 1), true, c.top[i].name, i === 1 ? '#DDE6F0' : '#F2B27A'); sfx('reveal'); }
+    setTimeout(() => { const pd = av.userData.pd; burst(pd.x, pd.top + 2, pd.z, i === 0 ? 90 : 50, cols); }, 450);
+  },
+  step(dt, t) {
+    const c = Host.cer; if (!c) return; c.t += dt;
+    while (c.timeline.length && c.t >= c.timeline[0][0]) c.timeline.shift()[1]();
+    const pc = W.podiumCenter; const ang = Math.sin(c.t * .25) * .55; const R = c.t > 11 ? 21 : 24, H = c.t > 11 ? 8 : 9.5;
+    const cx = pc.x + Math.sin(ang) * R, cz = pc.z + c.face * Math.cos(ang) * R;
+    camera.position.lerp(tmpV.set(cx, H, cz), 1 - Math.exp(-2.5 * dt)); camera.lookAt(pc.x, c.t > 11 ? 5.5 : 4, pc.z);
+    c.avs.forEach((av, i) => { if (!av.visible) return; const pd = av.userData.pd; const u = av.userData; u.drop = Math.min(1, (u.drop || 0) + dt * 1.8);
+      const e = 1 - Math.pow(1 - u.drop, 3); const base = pd.top + (1 - e) * 30; const jump = u.drop >= 1 ? Math.abs(Math.sin(t * (i === 0 ? 6 : 4.5) + i)) * (i === 0 ? 1 : .6) : 0;
+      av.position.y = base + jump; animAvatar(av, 0, jump > .15, t, dt, u.drop >= 1); });
+    if (c.trophy.visible) { const s = Math.min(1.3, c.trophy.scale.x + dt * 2.2); c.trophy.scale.setScalar(s); c.trophy.rotation.y += dt * 1.2; }
+    if (c.fw > 0) { c.fw -= dt; c.fwT = (c.fwT || 0) - dt; if (c.fwT <= 0) { c.fwT = .35 + Math.random() * .35; firework(pc.x + (Math.random() * 2 - 1) * 16, pc.z + c.face * (-5 - Math.random() * 8), .5 + Math.random() * .15); } }
+    else if (c.t > 19 && Math.random() < dt * .8) firework(pc.x + (Math.random() * 2 - 1) * 16, pc.z + c.face * (-6 - Math.random() * 8), .55);
+  },
+  showFinal(ranking) {
+    $('cerText').innerHTML = ''; $('cer').classList.remove('on'); $('hostUI').style.display = '';
+    const s = ranking; const order = [1, 0, 2], hg = [150, 110, 80], cl = ['#FFC83D', '#C9D2DC', '#D08A4A'];
+    $('podium').innerHTML = s.length ? order.map(i => s[i] ? `<div class="pd"><div class="n">${esc(s[i].name)}</div><div class="bx" style="height:${hg[i]}px;background:${cl[i]}">${i + 1}</div><div class="muted">${s[i].score} poin</div></div>` : '').join('') : '<p class="muted">Belum ada siswa yang menjawab.</p>';
+    $('finalList').innerHTML = s.map((p, i) => `<div class="kv"><span>${i + 1}. ${esc(p.name)}</span><b>${p.score}</b></div>`).join('');
+    show('final'); if (s.length) sfx('star'); setTimeout(() => { if (Host.phase === 'end') Music.setMode('victory'); }, 1200);
+  },
+  close() {
+    const c = Host.cer; show('final', false); $('cer').classList.remove('on'); if (!c) { Music.setMode(Host.phase === 'play' ? 'play' : 'lobby'); return; }
+    c.avs.forEach(removeAvatar); c.objs.forEach(o => scene.remove(o));
+    scene.background.copy(c.saved.bg); scene.fog.color.copy(c.saved.fog); scene.fog.near = c.saved.fn; scene.fog.far = c.saved.ff; hemi.intensity = c.saved.hemi; sun.intensity = c.saved.sun;
+    Host.cer = null; for (const p of Host.players.values()) if (p.av) p.av.visible = !!p.online; Host.refreshPosts(); Music.setMode(Host.phase === 'play' ? 'play' : 'lobby');
+  }
+};
+$('cerSkip').onclick = () => { const c = Host.cer; if (!c) return; while (c.timeline.length) { const f = c.timeline.shift(); f[1](); } c.avs.forEach(a => { a.visible = true; a.userData.drop = 1; }); };
+$('fClose').onclick = () => Cer.close();
+$('fAgain').onclick = () => { Cer.close(); Host.begin(); };
+$('fAna').onclick = () => { Cer.close(); Ana.open(); };
+
+// =====================================================================
+//                              ANALISIS
+// =====================================================================
+const Ana = {
+  tab: 'peta', mode: 'materi', sel: null, cur: null, stu: null,
+  sessions() { return Store.get('kb_sessions', []).filter(s => s && s.bank && Array.isArray(s.players)).sort((a, b) => b.id - a.id); },
+  open() {
+    const ss = this.sessions(); const live = MODE === 'host' ? Host.sessionPlayers() : [];
+    const opts = []; if (live.length && !(Host.sessionId && ss.some(s => s.id === Host.sessionId))) opts.push(`<option value="live">Sesi berjalan (${esc($('hKelas').value || '-')}, ${live.length} siswa)</option>`);
+    ss.forEach(s => { const d = new Date(s.id); opts.push(`<option value="${s.id}">${esc(s.kelas || '-')} · ${d.toLocaleDateString('id-ID')} ${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} · ${esc(s.bank.name)} · ${s.players.length} siswa${s.demo ? ' (demo)' : ''}${s.partial ? ' (belum selesai)' : ''}</option>`); });
+    $('anaSess').innerHTML = opts.join('') || '<option value="">Belum ada hasil permainan</option>';
+    this.load($('anaSess').value); show('ana');
+  },
+  load(v) {
+    this.sel = v; if (v === 'live') this.cur = { kelas: $('hKelas').value, date: new Date().toISOString(), bank: Host.bank, players: Host.sessionPlayers() };
+    else this.cur = this.sessions().find(s => String(s.id) === String(v)) || null;
+    this.st = this.cur ? C.stats(C.sanitizeBank(this.cur.bank), this.cur.players) : null; this.stu = null; this.render();
+  },
+  render() {
+    const tabs = [['peta', 'Peta Penguasaan'], ['lemah', 'Materi Terlemah'], ['soal', 'Analisis Soal'], ['rapor', 'Rapor Siswa'], ['remed', 'Kelompok Remedial']];
+    $('anaTabs').innerHTML = tabs.map(([k, l]) => `<button class="b-glass b-sm ${this.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('');
+    $('anaTabs').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { this.tab = b.dataset.tab; this.render(); });
+    $('anaXlsx').disabled = !this.st; $('anaDel').disabled = !this.cur || this.sel === 'live';
+    const body = $('anaBody'); if (!this.st) { body.innerHTML = '<p class="muted">Belum ada hasil. Mainkan game bersama siswa (atau pakai "+ Siswa demo"), lalu buka menu ini lagi.</p>'; return; }
+    if (!this.st.students.length) { body.innerHTML = '<p class="muted">Sesi ini belum memiliki jawaban siswa.</p>'; return; }
+    body.innerHTML = this['r_' + this.tab](); this.bind(body);
+  },
+  cls(p) { return p == null ? 'c-b' : p >= C.LV.tuntas ? 'c-t' : p >= C.LV.penguatan ? 'c-p' : 'c-r'; },
+  legend() { return `<div class="legend"><span><i class="dot c-t"></i>Tuntas ≥75%</span><span><i class="dot c-p"></i>Perlu penguatan 50–74%</span><span><i class="dot c-r"></i>Perlu remedial &lt;50%</span><span class="muted">– = belum mengerjakan</span></div>`; },
+  r_peta() {
+    const st = this.st; const subMode = this.mode === 'sub'; const cols = subMode ? st.subs.map(s => ({ k: s.key, l: s.sub, g: s.materi, avg: s.avg })) : st.materi.map(m => ({ k: m.name, l: m.name, avg: m.avg }));
+    let h = `<div class="row" style="align-items:center;gap:10px;flex-wrap:wrap"><div class="tabs" style="flex:none"><button class="b-glass b-sm ${subMode ? '' : 'on'}" data-mode="materi">Per Materi/Bab</button><button class="b-glass b-sm ${subMode ? 'on' : ''}" data-mode="sub">Per Sub-materi</button></div>${this.legend()}</div>`;
+    h += `<div style="overflow:auto;max-height:calc(100vh - 260px)"><table class="tbl"><thead><tr><th>Siswa</th><th>Nilai</th>${cols.map(c => `<th title="${esc(c.g || '')}">${esc(c.l)}</th>`).join('')}</tr></thead><tbody>`;
+    for (const s of [...st.students].sort((a, b) => a.name.localeCompare(b.name))) {
+      h += `<tr><td><button class="b-glass b-sm" data-stu="${esc(s.sid)}">${esc(s.name)}</button></td><td class="c">${s.nilai}</td>`;
+      for (const c of cols) { const o = subMode ? s.perSub[c.k] : s.perMateri[c.k]; const p = C.pctOf(o); h += `<td class="c ${this.cls(p)}">${p == null ? '–' : p + '%'}</td>`; }
+      h += '</tr>';
+    }
+    h += `<tr><td><b>RATA-RATA KELAS</b></td><td class="c">${Math.round(st.students.reduce((a, s) => a + s.nilai, 0) / st.students.length)}</td>${cols.map(c => `<td class="c ${this.cls(c.avg)}">${c.avg == null ? '–' : c.avg + '%'}</td>`).join('')}</tr></tbody></table></div>`;
+    return h;
+  },
+  bars(list) { return list.map(x => `<div class="row" style="align-items:center;flex-wrap:nowrap;margin:6px 0"><div style="flex:2;font-weight:800">${esc(x.l)}${x.g ? `<div class="muted" style="font-size:12px">${esc(x.g)}</div>` : ''}</div><div class="bar" style="flex:3"><i class="${this.cls(x.p)}" style="width:${x.p || 0}%"></i></div><div style="flex:none;width:52px;text-align:right;font-weight:900">${x.p == null ? '–' : x.p + '%'}</div></div>`).join(''); },
+  r_lemah() {
+    const st = this.st; const srt = a => [...a].sort((x, y) => (x.p == null ? 101 : x.p) - (y.p == null ? 101 : y.p));
+    const m = srt(st.materi.map(x => ({ l: x.name, p: x.avg }))), s = srt(st.subs.map(x => ({ l: x.sub, g: x.materi, p: x.avg })));
+    const w = m.find(x => x.p != null);
+    return `${w ? `<p class="f" style="font-size:18px">Materi terlemah kelas: <span style="color:var(--warn)">${esc(w.l)}</span> (${w.p}%)</p>` : ''}${this.legend()}<div class="sec">Per materi / bab</div>${this.bars(m)}<div class="sec">Per sub-materi (rinci)</div>${this.bars(s)}`;
+  },
+  r_soal() {
+    const qs = [...this.st.questions].sort((a, b) => (a.pct == null ? 101 : a.pct) - (b.pct == null ? 101 : b.pct));
+    let h = `<p class="muted">Diurutkan dari soal yang paling banyak dijawab salah. "Jawaban salah terbanyak" membantu melihat letak salah paham siswa.</p><div style="overflow:auto;max-height:calc(100vh - 250px)"><table class="tbl"><thead><tr><th>No</th><th>Pos</th><th>Materi</th><th style="min-width:260px">Soal</th><th>Kunci</th><th>% Benar</th><th>Jawaban salah terbanyak</th></tr></thead><tbody>`;
+    for (const q of qs) h += `<tr><td>${q.no}</td><td>${esc(POSTS[q.pos].name)}</td><td>${esc(q.sub)}<div class="muted" style="font-size:11px">${esc(q.materi)}</div></td><td>${richHTML(q.q)}</td><td>${'ABCD'[q.a]}. ${richHTML(q.o[q.a])}</td>
+      <td class="c ${this.cls(q.pct)}">${q.pct == null ? '–' : q.pct + '%'}<div style="font-size:11px;font-weight:700">${q.n} jawab</div></td><td>${q.topWrong >= 0 ? `${'ABCD'[q.topWrong]}. ${richHTML(q.o[q.topWrong])} <b style="color:var(--bad)">(${q.topWrongPct}%)</b>` : '–'}</td></tr>`;
+    return h + '</tbody></table></div>';
+  },
+  r_rapor() {
+    const st = this.st; const list = [...st.students].sort((a, b) => a.name.localeCompare(b.name)); const s = st.students.find(x => x.sid === this.stu) || list[0]; this.stu = s.sid;
+    const bank = C.sanitizeBank(this.cur.bank); const pl = this.cur.players.find(p => p.sid === s.sid) || { answers: {} }; const rep = C.studentReport(bank, pl.answers);
+    let h = `<div class="row" style="max-width:520px;align-items:center"><label for="stuSel" style="flex:none;margin:0">Pilih siswa</label><select id="stuSel">${list.map(x => `<option value="${esc(x.sid)}" ${x.sid === s.sid ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>`;
+    h += `<div class="row" style="margin:12px 0;gap:10px">${[['Nilai', s.nilai], ['Skor game', s.score], ['Benar', s.correct + '/' + bank.questions.length], ['Pos selesai', s.done], ['Koin', s.coins], ['Bintang', s.star ? 'Ya' : '-']].map(([k, v]) => `<div class="panel" style="padding:10px;text-align:center;flex:1;min-width:90px"><div class="muted">${k}</div><div class="f" style="font-size:24px;color:var(--gold)">${v}</div></div>`).join('')}</div>`;
+    h += reportHTML(rep).replace('Kamu hebat di', 'Kuat di').replace('Ayo pelajari lagi', 'Perlu remedial / penguatan');
+    h += `<div class="sec">Penguasaan per materi</div>${this.bars(st.materi.map(m => ({ l: m.name, p: C.pctOf(s.perMateri[m.name]) })))}`;
+    h += `<div class="sec">Penguasaan per sub-materi</div>${this.bars(st.subs.map(o => ({ l: o.sub, g: o.materi, p: C.pctOf(s.perSub[o.key]) })))}`;
+    const wrong = bank.questions.filter(q => pl.answers[q.id] !== undefined && pl.answers[q.id] !== q.a);
+    h += `<div class="sec">Soal yang dijawab salah (${wrong.length})</div>` + (wrong.map(q => `<div class="qrow"><div class="t"><div class="muted" style="font-size:12px">${esc(POSTS[q.pos].name)} · ${esc(q.sub)}</div><div style="font-weight:800">${richHTML(q.q)}</div><div style="font-size:13px">Jawaban siswa: <b style="color:var(--bad)">${'ABCD'[pl.answers[q.id]]}. ${richHTML(q.o[pl.answers[q.id]] || '')}</b> · Kunci: <b style="color:var(--ok)">${'ABCD'[q.a]}. ${richHTML(q.o[q.a])}</b></div></div></div>`).join('') || '<p class="muted">Tidak ada.</p>');
+    return h;
+  },
+  r_remed() {
+    return `<p class="muted">Siswa dikelompokkan per materi berdasarkan persentase jawaban benar. Gunakan untuk menyusun kelompok remedial dan pengayaan.</p>` + this.st.remedial.map(g => `<div class="panel" style="padding:12px;margin:10px 0"><div class="row" style="align-items:center"><h3 class="f" style="flex:3">${esc(g.materi)}</h3><div style="flex:1;text-align:right" class="f">Rata-rata <span style="color:var(--gold)">${g.avg == null ? '–' : g.avg + '%'}</span></div></div>
+      <div class="row" style="margin-top:8px;align-items:flex-start">${[['remedial', 'Perlu remedial (<50%)', 'var(--bad)'], ['penguatan', 'Perlu penguatan (50–74%)', 'var(--warn)'], ['tuntas', 'Tuntas (≥75%)', 'var(--ok)'], ['belum', 'Belum mengerjakan', 'var(--muted)']].map(([k, l, c]) => `<div style="min-width:180px"><div style="font-weight:900;color:${c}">${l} · ${g[k].length}</div><div class="muted">${g[k].map(esc).join(', ') || '–'}</div></div>`).join('')}</div></div>`).join('');
+  },
+  bind(body) {
+    body.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { this.mode = b.dataset.mode; this.render(); });
+    body.querySelectorAll('[data-stu]').forEach(b => b.onclick = () => { this.stu = b.dataset.stu; this.tab = 'rapor'; this.render(); });
+    const ss = body.querySelector('#stuSel'); if (ss) ss.onchange = () => { this.stu = ss.value; this.render(); };
+  }
+};
+$('hAnalisis').onclick = () => Ana.open();
+$('anaBack').onclick = () => show('ana', false);
+$('anaSess').onchange = () => Ana.load($('anaSess').value);
+$('anaXlsx').onclick = () => { if (!Ana.st) return; const b = C.sanitizeBank(Ana.cur.bank); const d = new Date(Ana.cur.date); writeXlsx(C.analysisSheets(b, Ana.st, { kelas: Ana.cur.kelas, date: d.toLocaleString('id-ID') }), 'Analisis_' + safeName(Ana.cur.kelas || 'Kelas') + '_' + d.toISOString().slice(0, 10) + '.xlsx'); };
+$('anaDel').onclick = () => { if (!Ana.cur || Ana.sel === 'live') return; confirmBox('Hapus sesi ini?', 'Riwayat hasil sesi ini dihapus dari laptop.', 'Hapus', () => { Store.set('kb_sessions', Store.get('kb_sessions', []).filter(s => String(s.id) !== String(Ana.sel))); Ana.open(); }); };
+
+// =====================================================================
+//                                LOOP
+// =====================================================================
+let last = performance.now(), TT = 0;
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; TT += dt;
+  try {
+    W.update(dt, TT); stepFx(dt);
+    if (MODE === 'solo' || MODE === 'online') { if (me.avatar) { stepStudent(dt, TT); stepOthers(dt, TT); } }
+    else if (MODE === 'host') { Host.stepBots(dt); Host.stepAvatars(dt, TT); if (Host.cer) Cer.step(dt, TT); else Host.camTick(TT); }
+    else { const a = TT * .06; camera.position.set(Math.sin(a) * 90, 45, -8 + Math.cos(a) * 90); camera.lookAt(0, 2, -8); }
+    renderer.render(scene, camera);
+  } catch (e) { console.error(e); }
+  requestAnimationFrame(frame);
+}
+window.KB = { Store, Bank, Host, Ana, Cer, me, rich, C, Music };
+(async () => {
+  try { await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1800))]); } catch (e) { }
+  W.build(scene); BANK = Bank.active(); $('loading').style.display = 'none'; requestAnimationFrame(frame);
+  if (location.hash === '#selftest' && window.SelfTest) window.SelfTest();
+})();
+})();
+
+</script>
+</body>
+</html>
